@@ -435,7 +435,7 @@ function FCONotes_AddNote(ctrl, fromKeybind, delete)
         if not delete then
             if data ~= nil then
                 ClearMenu()
-                ZO_Dialogs_ShowDialog("EDIT_NOTE", {displayName = data.displayName, note = data.FCOnote, guildId=activeGuildId, changedCallback = FCONotes_GuildRoster_FCO_Note_Changed})
+                ZO_Dialogs_ShowDialog("EDIT_NOTE", {displayName = data.displayName, note = data.FCOnote, changedCallback = FCONotes_GuildRoster_FCO_Note_Changed})
             end
         else
             local settings = settingsVars.settings
@@ -1293,7 +1293,7 @@ end
 --                                  If useDialog true:
 --                                  The function callbackChangedFunc will be called. You can specify your code to run
 --                                  The function parameters are:
---                                  displayName p_displayName, String p_noteText, Number p_guildId (unique guildId)
+--                                  displayName p_displayName, String p_noteText
 --returns Boolean noteWasChanged    If useDialog==false and note was updated in SavedVariables -> Will return true
 --                                  If useDialog==false and note was not updated in SavedVariables -> Will return false
 --                                  If useDialog==true and callbackChangedFunc==nil (standard calbackFunc was used) and note was updated in SavedVariables -> Will return true
@@ -1319,9 +1319,8 @@ function FCONotes.SetGuildMemberNote(guildId, displayName, guildMemberNoteText, 
     end
 
     --Callback function for the notes dialog "Accept" button
-    local standardCallBackFunc = function(p_displayName, p_noteText, p_guildId)
-        if p_guildId == nil or p_guildId == 0 then return false end
-        updateFCONotesSavedVariables(p_guildId, p_displayName, p_noteText)
+    local standardCallBackFunc = function(p_displayName, p_noteText)
+        updateFCONotesSavedVariables(guildId, p_displayName, p_noteText)
     end
     if not callbackChangedFunc or type(callbackChangedFunc) ~= "function" then
         callbackChangedFunc =  standardCallBackFunc
@@ -1332,7 +1331,7 @@ function FCONotes.SetGuildMemberNote(guildId, displayName, guildMemberNoteText, 
        updateFCONotesSavedVariables(guildId, displayName, guildMemberNoteText)
     else
     --Show a dialog to input the memberNote
-        ZO_Dialogs_ShowDialog("EDIT_NOTE", {displayName = displayName, note = guildMemberNoteText, guildId=guildId, changedCallback = callbackChangedFunc})
+        ZO_Dialogs_ShowDialog("EDIT_NOTE", {displayName = displayName, note = guildMemberNoteText, changedCallback = callbackChangedFunc})
         --Custom callbackFunc was provided?
         if callbackChangedFunc ~= standardCallBackFunc then
             retVar = true
