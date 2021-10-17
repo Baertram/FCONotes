@@ -5,19 +5,17 @@
 Write your own notes for friends, ignored players and guild mates]]
 ------------------------------------------------------------------
 
-local LIBLA = LibLoadedAddons
 local LAMFCONotes = LibAddonMenu2
 
 local addonVars = {}
-addonName			= "FCONotes"
-local addonName = addonName
+local addonName = "FCONotes"
 addonVars.addonNameMenu			= "FCO Notes"
 addonVars.savedVariablesName	= "FCONotes_Settings"
 addonVars.addonNameMenuDisplay	= "|c00FF00FCO |cFFFF00Notes|r"
 addonVars.addonAuthor 			= '|cFFFF00Baertram|r'
 addonVars.addonVersion		   	= 0.01 -- Version for the SavedVariables. Changing this will create TOTALY NEW SavedVariables!
-addonVars.addonVersionOptions 	= '0.1.3'
-addonVars.addonVersionOptionsNumber = 0.13
+addonVars.addonVersionOptions 	= '0.1.4'
+addonVars.addonVersionOptionsNumber = 0.14
 
 FCONotes = {}
 FCONotes.version = addonVars.addonVersionOptions
@@ -1225,8 +1223,8 @@ local function LoadSavedVariables()
 end
 
 --Addon got loaded
-local function FCONotes_Loaded(eventCode, addOnName)
-    if addOnName ~= addonName then return end
+local function FCONotes_Loaded(eventCode, addOnNameOfEachAddonLoaded)
+    if addOnNameOfEachAddonLoaded ~= addonName then return end
 
 --=============================================================================================================
 --	LOAD USER SETTINGS
@@ -1253,9 +1251,6 @@ local function FCONotes_Loaded(eventCode, addOnName)
             alignment = KEYBIND_STRIP_ALIGN_CENTER,
         }
     }
-
-  	-- Registers addon to loadedAddon library
-	LIBLA:RegisterAddon(addonName, addonVars.addonVersionOptionsNumber)
 
     --Player activated event as alla ddons are loaded and the UI is ready
 	EVENT_MANAGER:RegisterForEvent(addonName, EVENT_PLAYER_ACTIVATED, FCONotes_PlayerActivated)
