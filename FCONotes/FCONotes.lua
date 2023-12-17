@@ -806,11 +806,13 @@ local function FCONotes_AddContextMenuEntry(ctrl, noteType)
                 end)
 
                 if noteType == FCONOTES_LIST_TYPE_GUILDS_ROSTER then
-                    --AddMenuItem(localizationVars.fco_notes_loc["context_menu_send_personal_guild_note_to_officer_chat"],
-                    AddCustomMenuItem(locVars["context_menu_send_personal_guild_note_to_officer_chat"],
-                            function()
-                                FCONotes_SendNoteToGuildOfficerChat(data.FCOnote, data.displayName, data.characterName)
-                            end)
+                    if DoesPlayerHaveGuildPermission(GUILD_ROSTER_MANAGER:GetGuildId(), GUILD_PERMISSION_OFFICER_CHAT_WRITE) then
+                        --AddMenuItem(localizationVars.fco_notes_loc["context_menu_send_personal_guild_note_to_officer_chat"],
+                        AddCustomMenuItem(locVars["context_menu_send_personal_guild_note_to_officer_chat"],
+                                function()
+                                    FCONotes_SendNoteToGuildOfficerChat(data.FCOnote, data.displayName, data.characterName)
+                                end)
+                    end
                 end
             end
 
@@ -850,17 +852,15 @@ end
 
 --Callback function for the guild roster keyboard, setuprow
 local function FCONotes_GuildRoster_SetupRow(guildRosterObject, control, data)
-    if not preventerVars.addonLoaded or guildRosterVars.scene ~= SCENE_SHOWING then return false end
-d("[FCONotes_GuildRoster_SetupRow] Scene: " .. tostring(guildRosterVars.scene) .. "/" .. tostring(SCENE_SHOWING) .. ", firstCall: " ..tos(guildRosterVars.firstCall))
+    if not preventerVars.addonLoaded --[[or guildRosterVars.scene ~= SCENE_SHOWING]] then return false end
+--d("[FCONotes_GuildRoster_SetupRow] Scene: " .. tostring(guildRosterVars.scene) .. "/" .. tostring(SCENE_SHOWING) .. ", firstCall: " ..tos(guildRosterVars.firstCall))
 
-    --[[
     if not guildRosterVars.firstCall then
         if ZO_GuildRoster:IsHidden() then
-d(">guild roster is hidden!")
+--d(">guild roster is hidden!")
             return false
         end
     end
-    ]]
 
     --Do not go on if the edit note dialog is shown
     if not ZO_EditNoteDialog:IsHidden() then
@@ -869,7 +869,7 @@ d(">guild roster is hidden!")
 
     --Update the note from SV
     if data ~= nil and data.displayName ~= nil and (data.FCOnote == nil or data.FCOnote == "") then
-d("GuildRoster - SetupRow: " .. tos(data.displayName) .. " (" .. tos(data.characterName) .. ")")
+--d("GuildRoster - SetupRow: " .. tos(data.displayName) .. " (" .. tos(data.characterName) .. ")")
 
         local settings = FCON.settingsVars.settings
         local savedNotes
@@ -888,7 +888,7 @@ d("GuildRoster - SetupRow: " .. tos(data.displayName) .. " (" .. tos(data.charac
             savedNotes = FCON.settingsVars.settings.personalGuildNotes
         end
         local guildPersonalNote = savedNotes ~= nil and savedNotes[data.displayName]
-d(">guildPersonalNote: " ..tos(guildPersonalNote))
+--d(">guildPersonalNote: " ..tos(guildPersonalNote))
 
         data.FCOnote = guildPersonalNote or ""
     end
@@ -899,7 +899,7 @@ end
 
 --Callback function for the friends list keyboard, setuprow
 local function FCONotes_FriendsList_SetupRow(friendListObject, control, data)
-d("[FCONotes_FriendsList_SetupRow] Scene: " .. tostring(friendsListVars.scene) .. "/" .. tostring(SCENE_SHOWING))
+--d("[FCONotes_FriendsList_SetupRow] Scene: " .. tostring(friendsListVars.scene) .. "/" .. tostring(SCENE_SHOWING))
     if not preventerVars.addonLoaded or friendsListVars.scene == SCENE_SHOWING then return false end
 
     --Do not go on if the edit note dialog is shown
@@ -919,7 +919,7 @@ d("[FCONotes_FriendsList_SetupRow] Scene: " .. tostring(friendsListVars.scene) .
 end
 
 local function FCONotes_IgnoreList_SetupRow(ignoreListObject, control, data)
-d("[FCONotes_IgnoreList_SetupRow] Scene: " .. tostring(ignoreListVars.scene) .. "/" .. tostring(SCENE_SHOWING))
+--d("[FCONotes_IgnoreList_SetupRow] Scene: " .. tostring(ignoreListVars.scene) .. "/" .. tostring(SCENE_SHOWING))
     if not preventerVars.addonLoaded or ignoreListVars.scene == SCENE_SHOWING then return false end
 
     --Do not go on if the edit note dialog is shown
