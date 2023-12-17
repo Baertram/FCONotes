@@ -834,7 +834,7 @@ local function FCONotes_IgnoreListRow_OnMouseUp(control, button, upInside)
 end
 
 --Callback function for the guild roster keyboard, setuprow
-local function FCONotes_GuildRoster_SetupRow(control, data)
+local function FCONotes_GuildRoster_SetupRow(guildRosterObject, control, data)
 	--WrapFunction(GUILD_ROSTER_KEYBOARD, "SetupRow", function(originalFunction, ...)
 	-- do something before it
 --d("[FCONotes_GuildRoster_SetupRow] Scene: " .. tostring(guildRosterVars.scene) .. "/" .. tostring(SCENE_SHOWING))
@@ -862,7 +862,7 @@ local function FCONotes_GuildRoster_SetupRow(control, data)
 end
 
 --Callback function for the friends list keyboard, setuprow
-local function FCONotes_FriendsList_SetupRow(control, data)
+local function FCONotes_FriendsList_SetupRow(friendListObject, control, data)
 	--WrapFunction(FRIENDS_LIST, "SetupRow", function(originalFunction, ...)
 	-- do something before it
 d("[FCONotes_FriendsList_SetupRow] Scene: " .. tostring(friendsListVars.scene) .. "/" .. tostring(SCENE_SHOWING))
@@ -887,7 +887,7 @@ d("FriendsList - SetupRow: " .. tos(data2.displayName) .. " (" .. tos(data2.char
 	--end)
 end
 
-local function FCONotes_IgnoreList_SetupRow(control, data)
+local function FCONotes_IgnoreList_SetupRow(ignoreListObject, control, data)
 	--WrapFunction(FRIENDS_LIST, "SetupRow", function(originalFunction, ...)
 	-- do something before it
 d("[FCONotes_IgnoreList_SetupRow] Scene: " .. tostring(ignoreListVars.scene) .. "/" .. tostring(SCENE_SHOWING))
