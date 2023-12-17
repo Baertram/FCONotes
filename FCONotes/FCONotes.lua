@@ -225,7 +225,7 @@ local function FCONotes_UpdateNoteRowIcon(noteType, control, data)
 
 
     elseif noteType == FCONOTES_LIST_TYPE_FRIENDS_LIST then
-d("FCONotes_UpdateNoteRowIcon-noteType: " ..tos(noteType))
+--d("FCONotes_UpdateNoteRowIcon-noteType: " ..tos(noteType))
         local standardESOFriendsListNote = control:GetNamedChild("Note")
         if standardESOFriendsListNote ~= nil then
             local personalFriendsListNote = control:GetNamedChild("FCONote")
@@ -244,7 +244,7 @@ d("FCONotes_UpdateNoteRowIcon-noteType: " ..tos(noteType))
                 local noteText = ""
                 local dataTab = data or control.dataEntry.data
 
-d(">displayName: " .. tos(dataTab.displayName))
+--d(">displayName: " .. tos(dataTab.displayName))
                 if dataTab.FCOnote == nil or dataTab.FCOnote == "" then
                     doHide = true
                 elseif dataTab.FCOnote ~= nil then
@@ -298,7 +298,7 @@ d(">displayName: " .. tos(dataTab.displayName))
                         end)
                     end
                 end
-d(">doHide: " ..tos(doHide) )
+--d(">doHide: " ..tos(doHide) )
             end
         end
 
@@ -1150,7 +1150,7 @@ local function hook_functions()
     --======== GUILD ROSTER ====================================================
     --Register a callback function for the guild roster scene
     GUILD_ROSTER_SCENE:RegisterCallback("StateChange", function(oldState, newState)
-d("[GUILD ROSTER SCENE] State: " .. tostring(newState))
+--d("[GUILD ROSTER SCENE] State: " .. tostring(newState))
         --Guild roster is starting to show
         guildRosterVars.scene = newState
 
