@@ -1,125 +1,25 @@
 -----------------------------------------------------------------
 --FCONotes.lua
---Author: Baertram
---[[
-Write your own notes for friends, ignored players and guild mates]]
-------------------------------------------------------------------
+-----------------------------------------------------------------
+local FCON = FCONotes
 
-local LAMFCONotes = LibAddonMenu2
+--local speedup refs
+local tos = tostring
 
-local addonVars = {}
-local addonName = "FCONotes"
-addonVars.addonNameMenu			= "FCO Notes"
-addonVars.savedVariablesName	= "FCONotes_Settings"
-addonVars.addonNameMenuDisplay	= "|c00FF00FCO |cFFFF00Notes|r"
-addonVars.addonAuthor 			= '|cFFFF00Baertram|r'
-addonVars.addonVersion		   	= 0.01 -- Version for the SavedVariables. Changing this will create TOTALY NEW SavedVariables!
-addonVars.addonVersionOptions 	= '0.1.4'
-addonVars.addonVersionOptionsNumber = 0.14
+--Constants refs
+local addonVars = FCON.addonVars
+local addonName = addonVars.addonName
 
-FCONotes = {}
-FCONotes.version = addonVars.addonVersionOptions
-FCONotes.svLoaded = false
+local preventerVars = FCON.preventerVars
+local guildRosterVars = FCON.guildRosterVars
+local friendsListVars = FCON.friendsListVars
+local ignoreListVars = FCON.ignoreListVars
+local keystripVars = FCON.keystripVars
+local settingsVars = FCON.settingsVars
+local localizationVars = FCON.localizationVars
+local zosVars = FCON.zosVars
+local textureVars = FCON.textureVars
 
-local preventerVars = {}
-preventerVars.gLocalizationDone     		= false
-preventerVars.KeyBindingTexts	    		= false
-preventerVars.lastGuildId           		= -1
-preventerVars.doBackupGuildNotes    		= false
-preventerVars.addonLoaded           		= false
-preventerVars.guildHomeSceneFirstRun		= true
---preventerVars.inHudScene            		  = false
-preventerVars.dontChangeSceneVar			= false
-preventerVars.sceneButtonsPreHook   		= false
-preventerVars.sceneButtonsHeraldricPreHook	= false
-preventerVars.buttonPressed					= false
-
-local guildRosterVars = {}
-guildRosterVars.lastGuildRosterRowControl = nil
-guildRosterVars.firstCall                 = true
-guildRosterVars.scene                     = nil
-
-local settingsVars				= {}
-settingsVars.settings 			= {}
-settingsVars.settings.personalGuildNotes = {}
-settingsVars.defaultSettings	= {}
-
-local localizationVars = {}
-
-local keystripVars = {}
-keystripVars.GuildRosterAddPersonalNote = {}
-
-local zosVars = {}
-zosVars.guildRosterList     = ZO_GuildRosterList
-
-local textureVars = {}
-textureVars.size   = 32
-textureVars.MARKER_TEXTURES = {
-    [1]  = [[/esoui/art/campaign/campaignbrowser_fullpop.dds]],
-    [2]  = [[/esoui/art/inventory/inventory_tabicon_armor_disabled.dds]],
-    [3]  = [[/esoui/art/crafting/smithing_tabicon_research_disabled.dds]],
-    [4]  = [[/esoui/art/tradinghouse/tradinghouse_sell_tabicon_disabled.dds]],
-    [5]  = [[/esoui/art/campaign/overview_indexicon_bonus_disabled.dds]],
-    [6]  = [[/esoui/art/ava/tabicon_bg_score_disabled.dds]],
-    [7]  = [[/esoui/art/guild/guild_rankicon_leader_large.dds]],
-    [8]  = [[/esoui/art/lfg/lfg_healer_up.dds]],
-    [9]  = [[/esoui/art/mounts/timer_icon.dds]],
-    [10] = [[/esoui/art/crafting/alchemy_tabicon_solvent_up.dds]],
-    [11] = [[/esoui/art/buttons/cancel_up.dds]],
-    [12] = [[/esoui/art/buttons/info_up.dds]],
-    [13] = [[/esoui/art/buttons/pinned_normal.dds]],
-    [14] = [[/esoui/art/cadwell/cadwell_indexicon_gold_up.dds]],
-    [15] = [[/esoui/art/cadwell/cadwell_indexicon_silver_up.dds]],
-    [16] = [[/esoui/art/campaign/campaignbonus_keepicon.dds]],
-    [17] = [[/esoui/art/icons/scroll_005.dds]],
-    [18] = [[/esoui/art/campaign/campaignbrowser_columnheader_ad.dds]],
-    [19] = [[/esoui/art/campaign/campaignbrowser_columnheader_dc.dds]],
-    [20] = [[/esoui/art/campaign/campaignbrowser_columnheader_ep.dds]],
-    [21] = [[/esoui/art/campaign/campaignbrowser_guild.dds]],
-    [22] = [[/esoui/art/campaign/campaignbrowser_indexicon_normal_up.dds]],
-    [23] = [[/esoui/art/campaign/overview_indexicon_scoring_up.dds]],
-    [24] = [[/esoui/art/charactercreate/charactercreate_bodyicon_up.dds]],
-    [25] = [[/esoui/art/characterwindow/gearslot_offhand.dds]],
-    [26] = [[/esoui/art/characterwindow/gearslot_mainhand.dds]],
-    [27] = [[/esoui/art/characterwindow/gearslot_costume.dds]],
-    [28] = [[/esoui/art/chatwindow/chat_mail_up.dds]],
-    [29] = [[/esoui/art/chatwindow/chat_notification_up.dds]],
-    [30] = [[/esoui/art/crafting/alchemy_tabicon_reagent_up.dds]],
-    [31] = [[/esoui/art/crafting/smithing_tabicon_refine_up.dds]],
-    [32] = [[/esoui/art/deathrecap/deathrecap_killingblow_icon.dds]],
-    [33] = [[/esoui/art/fishing/bait_emptyslot.dds]],
-    [34] = [[/esoui/art/guild/guildhistory_indexicon_guildbank_up.dds]],
-    [35] = [[/esoui/art/guild/guild_indexicon_member_up.dds]],
-    [36] = [[/esoui/art/guild/tabicon_roster_up.dds]],
-    [37] = [[/esoui/art/icons/poi/poi_dungeon_complete.dds]],
-    [38] = [[/esoui/art/icons/poi/poi_groupinstance_complete.dds]],
-    [39] = [[/esoui/art/icons/servicemappins/servicepin_magesguild.dds]],
-    [40] = [[/esoui/art/icons/servicemappins/servicepin_fightersguild.dds]],
-    [41] = [[/esoui/art/lfg/lfg_dps_up.dds]],
-    [42] = [[/esoui/art/lfg/lfg_leader_icon.dds]],
-    [43] = [[/esoui/art/lfg/lfg_tank_up.dds]],
-    [44] = [[/esoui/art/lfg/lfg_veterandungeon_up.dds]],
-    [45] = [[/esoui/art/lfg/lfg_normaldungeon_up.dds]],
-    [46] = [[/esoui/art/progression/icon_dualwield.dds]],
-    [47] = [[/esoui/art/progression/icon_firestaff.dds]],
-    [48] = [[/esoui/art/progression/icon_bows.dds]],
-    [49] = [[/esoui/art/progression/icon_2handed.dds]],
-    [50] = [[/esoui/art/progression/icon_1handed.dds]],
-    [51] = [[/esoui/art/progression/progression_tabicon_backup_inactive.dds]],
-    [52] = [[/esoui/art/repair/inventory_tabicon_repair_disabled.dds]],
-    [53] = [[/esoui/art/worldmap/selectedquesthighlight.dds]],
-    [54] = [[/esoui/art/journal/journal_tabicon_cadwell_up.dds]],
-    [55] = [[/esoui/art/crafting/enchantment_tabicon_deconstruction_disabled.dds]],
-    [56] = [[/esoui/art/crafting/smithing_tabicon_improve_disabled.dds]],
-    [57] = [[/esoui/art/bank/bank_tabicon_deposit_up.dds]],
-    [58] = [[/esoui/art/currency/currency_gold.dds]],
-    [59] = [[/esoui/art/guild/gamepad/guild_bankaccess.dds]],
-    [60] = [[/esoui/art/progression/progression_indexicon_guilds_up.dds]],
-}
---Additional size for the textures, if the texture got a special size
-textureVars.MARKER_TEXTURES_SIZE = {
-    [58] = { width = 16, height = 16, offsetLeft = 1, offsetTop = -8 },
-}
 
 --================= LOCAL FUNCTIONS ============================================
 
@@ -136,6 +36,22 @@ local function WrapFunction(object, functionName, wrapper)
 end
 ]]
 
+--Local helper function to copy a deep-structured table/array
+local function deepcopy(orig)
+    local orig_type = type(orig)
+    local copy
+    if orig_type == 'table' then
+        copy = {}
+        for orig_key, orig_value in next, orig, nil do
+            copy[deepcopy(orig_key)] = deepcopy(orig_value)
+        end
+        setmetatable(copy, deepcopy(getmetatable(orig)))
+    else -- number, string, boolean, etc
+        copy = orig
+    end
+    return copy
+end
+
 local function getGuildIndexById(guildId)
 	local numGuilds = GetNumGuilds()
     for guildIndex=1,numGuilds,1 do
@@ -145,315 +61,674 @@ local function getGuildIndexById(guildId)
     return
 end
 
---Function to saver the current personal guild member notes for a later backup
-local function FCONotes_BackupPersonalGuildMemberNotesNow(guildId, displayName)
-    --Add only 1 new entry to the backup?
-    if displayName ~= nil and displayName ~= "" then
-        --Saved for each account namee or guild Id + account name?
-        if not settingsVars.settings.saveGuildPersonalNotesAccountWide then
-            if guildId == nil or guildId == -1 then return false end
-            if settingsVars.settings.personalGuildNotesBackup[guildId] == nil then settingsVars.settings.personalGuildNotesBackup[guildId] = {} end
-            settingsVars.settings.personalGuildNotesBackup[guildId][displayName] = {}
-            local noteTable = settingsVars.settings.personalGuildNotes[guildId][displayName]
-            settingsVars.settings.personalGuildNotesBackup[guildId][displayName] = noteTable
-        else
-            settingsVars.settings.personalGuildNotesBackup[displayName] = {}
-            local noteTable = settingsVars.settings.personalGuildNotes[displayName]
-            settingsVars.settings.personalGuildNotesBackup[displayName] = noteTable
-        end
-    else
-        --Add all currently saved personal guild member notes to the backup
-        settingsVars.settings.personalGuildNotesBackup = {}
-        --Local helper function to copy a deep-structured table/array
-        local function deepcopy(orig)
-            local orig_type = type(orig)
-            local copy
-            if orig_type == 'table' then
-                copy = {}
-                for orig_key, orig_value in next, orig, nil do
-                    copy[deepcopy(orig_key)] = deepcopy(orig_value)
-                end
-                setmetatable(copy, deepcopy(getmetatable(orig)))
-            else -- number, string, boolean, etc
-            copy = orig
+--Function to save the current personal guild member notes for a later backup
+local function FCONotes_BackupPersonalNotesNow(notesType, displayName, data)
+    local backupAll = (notesType == nil and displayName == nil and data == nil and true) or false
+    local somethingBackuped = false
+    if backupAll or notesType == FCONOTES_LIST_TYPE_GUILDS_ROSTER then
+        --Add only 1 new entry to the backup?
+        if displayName ~= nil and displayName ~= "" then
+            --Saved for each account name or guild Id + account name?
+            if not settingsVars.settings.saveGuildPersonalNotesAccountWide then
+                local guildId = data.guildId
+                if guildId == nil or guildId == -1 then return false end
+                if settingsVars.settings.personalGuildNotesBackup[guildId] == nil then settingsVars.settings.personalGuildNotesBackup[guildId] = {} end
+                settingsVars.settings.personalGuildNotesBackup[guildId][displayName] = {}
+                local noteTable = settingsVars.settings.personalGuildNotes[guildId][displayName]
+                settingsVars.settings.personalGuildNotesBackup[guildId][displayName] = noteTable
+                somethingBackuped = true
+            else
+                local noteTable = settingsVars.settings.personalGuildNotes[displayName]
+                settingsVars.settings.personalGuildNotesBackup[displayName] = noteTable
+                somethingBackuped = true
             end
-            return copy
+        else
+            --Add all currently saved personal guild member notes to the backup
+            settingsVars.settings.personalGuildNotesBackup = {}
+            --Copy the settings table with the personal guild member notes to the backup table now
+            settingsVars.settings.personalGuildNotesBackup = deepcopy(settingsVars.settings.personalGuildNotes)
+            somethingBackuped = true
         end
-        --Copy the settings table with the personal guild member notes to the backup table now
-        settingsVars.settings.personalGuildNotesBackup = deepcopy(settingsVars.settings.personalGuildNotes)
     end
-    return true
+    if backupAll or  notesType == FCONOTES_LIST_TYPE_FRIENDS_LIST then
+        if displayName ~= nil and displayName ~= "" then
+            local noteTable = settingsVars.settings.personalFriendsListNotes[displayName]
+            settingsVars.settings.personalFriendsListNotesBackup[displayName] = noteTable
+            somethingBackuped = true
+        else
+            settingsVars.settings.personalFriendsListNotesBackup = {}
+            settingsVars.settings.personalFriendsListNotesBackup = deepcopy(settingsVars.settings.personalFriendsListNotes)
+            somethingBackuped = true
+        end
+    end
+    if backupAll or  notesType == FCONOTES_LIST_TYPE_IGNORE_LIST then
+        if displayName ~= nil and displayName ~= "" then
+            local noteTable = settingsVars.settings.personalIgnoreListNotes[displayName]
+            settingsVars.settings.personalIgnoreListNotesBackup[displayName] = noteTable
+            somethingBackuped = true
+        else
+            settingsVars.settings.personalIgnoreListNotesBackup = {}
+            settingsVars.settings.personalIgnoreListNotesBackup = deepcopy(settingsVars.settings.personalIgnoreListNotes)
+            somethingBackuped = true
+        end
+    end
+    return somethingBackuped
 end
 
 --Function to restore the last saved backup of the personal guild member notes
-local function FCONotes_RestorePersonalGuildMemberNotesNow()
-    if settingsVars.settings.personalGuildNotesBackup ~= nil then
-        settingsVars.settings.personalGuildNotes = settingsVars.settings.personalGuildNotesBackup
-        --Reloading the UI now to saved variables back to the file
-        ReloadUI()
+local function FCONotes_RestorePersonalFCONotesNow(noteType)
+    if noteType == FCONOTES_LIST_TYPE_GUILDS_ROSTER then
+        if settingsVars.settings.personalGuildNotesBackup ~= nil then
+            settingsVars.settings.personalGuildNotes = settingsVars.settings.personalGuildNotesBackup
+            --Reloading the UI now to saved variables back to the file
+            ReloadUI()
+        end
+    elseif noteType == FCONOTES_LIST_TYPE_FRIENDS_LIST then
+        if settingsVars.settings.personalFriendsListNotesBackup ~= nil then
+            settingsVars.settings.personalFriendsListNotes = settingsVars.settings.personalFriendsListNotesBackup
+            --Reloading the UI now to saved variables back to the file
+            ReloadUI()
+        end
+    elseif noteType == FCONOTES_LIST_TYPE_IGNORE_LIST then
+        if settingsVars.settings.personalIgnoreListNotesBackup ~= nil then
+            settingsVars.settings.personalIgnoreListNotes = settingsVars.settings.personalIgnoreListNotesBackup
+            ReloadUI()
+        end
     end
 end
+
+local function FCONotes_UpdateNoteRowIcon(noteType, control, data)
+    if noteType == nil then return false end
+    if control == nil then return end
+
+    if noteType == FCONOTES_LIST_TYPE_GUILDS_ROSTER then
+        local standardESOGuildMemberNote = control:GetNamedChild("Note")
+        if standardESOGuildMemberNote ~= nil then
+            local personalGuildMemberNote = control:GetNamedChild("FCONote")
+            local parent = WINDOW_MANAGER:GetControlByName(control:GetName(), "")
+            if parent == nil then
+                return true
+            end
+            if personalGuildMemberNote == nil then
+                personalGuildMemberNote = WINDOW_MANAGER:CreateControl(control:GetName() .. "FCONote", parent, CT_TEXTURE)
+            end
+            local iconDataTab = settingsVars.settings.icon[FCONOTES_LIST_TYPE_GUILDS_ROSTER]
+            local iconTexture = iconDataTab.texture
+            --Control did already exist or was created now
+            if personalGuildMemberNote ~= nil and iconTexture ~= nil then
+                local doHide = false
+                local noteText = ""
+                local dataTab = data or control.dataEntry.data
+                if dataTab.FCOnote == nil or dataTab.FCOnote == "" then
+                    doHide = true
+                elseif dataTab.FCOnote ~= nil then
+                    noteText = dataTab.FCOnote
+                end
+                local pLeft, pTop
+                local pWidth, pHeight
+                local pTexture = textureVars.MARKER_TEXTURES[iconTexture]
+                if pTexture ~= nil and pTexture ~= "" then
+                    --Change the icon's size because it is special?
+                    if textureVars.MARKER_TEXTURES_SIZE[iconTexture] ~= nil then
+                        pWidth = textureVars.MARKER_TEXTURES_SIZE[iconTexture].width or 32
+                        pHeight = textureVars.MARKER_TEXTURES_SIZE[iconTexture].height or 32
+                        pLeft = iconDataTab.position.x + textureVars.MARKER_TEXTURES_SIZE[iconTexture].offsetLeft or 0
+                        pTop = iconDataTab.position.y + textureVars.MARKER_TEXTURES_SIZE[iconTexture].offsetTop or 0
+                    else
+                        pWidth = iconDataTab.size or 32
+                        pHeight = pWidth
+                        pLeft = iconDataTab.position.x or 0
+                        pTop = iconDataTab.position.y or 0
+                    end
+                    --Hide or show the control now
+                    personalGuildMemberNote:SetHidden(doHide)
+                    personalGuildMemberNote:SetDimensions(pWidth, pHeight)
+                    personalGuildMemberNote:SetTexture(pTexture)
+                    local iconColor = iconDataTab.color
+                    personalGuildMemberNote:SetColor(iconColor.r, iconColor.g, iconColor.b, iconColor.a)
+                    personalGuildMemberNote:ClearAnchors()
+                    personalGuildMemberNote:SetAnchor(BOTTOMLEFT, parent, BOTTOMLEFT, pLeft, pTop)
+                    personalGuildMemberNote:SetDrawTier(DT_HIGH)
+
+                    --Add mouse handlers
+                    personalGuildMemberNote:SetMouseEnabled(not doHide)
+                    if not doHide then
+                        personalGuildMemberNote:SetHandler("OnMouseEnter", function(self)
+                            if noteText ~= nil and noteText ~= "" then
+                                local tooltipText = "|c00FF00FCO|r|cFFFF00Notes|r\n|c8888DD" .. dataTab.displayName .. "|r (" .. dataTab.characterName .. ")\n\n|cFFFFFF" .. noteText .. "|r"
+                                ZO_Tooltips_ShowTextTooltip(personalGuildMemberNote, LEFT, tooltipText)
+                            else
+                                ZO_Tooltips_HideTextTooltip()
+                            end
+                        end)
+                        personalGuildMemberNote:SetHandler("OnMouseExit", function(self)
+                            ZO_Tooltips_HideTextTooltip()
+                        end)
+                        personalGuildMemberNote:SetHandler("OnMouseUp", function(self, button, upInside)
+                            ZO_Tooltips_HideTextTooltip()
+                            if button == MOUSE_BUTTON_INDEX_LEFT and upInside then
+                                FCONotes_AddNote(self, true, false, FCONOTES_LIST_TYPE_GUILDS_ROSTER)
+                            end
+                        end)
+                    end
+                end
+            end
+        end
+
+
+    elseif noteType == FCONOTES_LIST_TYPE_FRIENDS_LIST then
+        local standardESOFriendsListNote = control:GetNamedChild("Note")
+        if standardESOFriendsListNote ~= nil then
+            local personalFriendsListNote = control:GetNamedChild("FCONote")
+            local parent                  = WINDOW_MANAGER:GetControlByName(control:GetName(), "")
+            if parent == nil then
+                return true
+            end
+            if personalFriendsListNote == nil then
+                personalFriendsListNote = WINDOW_MANAGER:CreateControl(control:GetName() .. "FCONote", parent, CT_TEXTURE)
+            end
+            local iconDataTab = settingsVars.settings.icon[FCONOTES_LIST_TYPE_FRIENDS_LIST]
+            local iconTexture = iconDataTab.texture
+            --Control did already exist or was created now
+            if personalFriendsListNote ~= nil and iconTexture ~= nil then
+                local doHide = false
+                local noteText = ""
+                local dataTab = data or control.dataEntry.data
+                if dataTab.FCOnote == nil or dataTab.FCOnote == "" then
+                    doHide = true
+                elseif dataTab.FCOnote ~= nil then
+                    noteText = dataTab.FCOnote
+                end
+                local pLeft, pTop
+                local pWidth, pHeight
+                local pTexture = textureVars.MARKER_TEXTURES[iconTexture]
+                if pTexture ~= nil and pTexture ~= "" then
+                    --Change the icon's size because it is special?
+                    if textureVars.MARKER_TEXTURES_SIZE[iconTexture] ~= nil then
+                        pWidth = textureVars.MARKER_TEXTURES_SIZE[iconTexture].width or 32
+                        pHeight = textureVars.MARKER_TEXTURES_SIZE[iconTexture].height or 32
+                        pLeft = iconDataTab.position.x + textureVars.MARKER_TEXTURES_SIZE[iconTexture].offsetLeft or 0
+                        pTop = iconDataTab.position.y + textureVars.MARKER_TEXTURES_SIZE[iconTexture].offsetTop or 0
+                    else
+                        pWidth = iconDataTab.size or 32
+                        pHeight = pWidth
+                        pLeft = iconDataTab.position.x or 0
+                        pTop = iconDataTab.position.y or 0
+                    end
+                    --Hide or show the control now
+                    personalFriendsListNote:SetHidden(doHide)
+                    personalFriendsListNote:SetDimensions(pWidth, pHeight)
+                    personalFriendsListNote:SetTexture(pTexture)
+                    local iconColor = iconDataTab.color
+                    personalFriendsListNote:SetColor(iconColor.r, iconColor.g, iconColor.b, iconColor.a)
+                    personalFriendsListNote:ClearAnchors()
+                    personalFriendsListNote:SetAnchor(BOTTOMLEFT, parent, BOTTOMLEFT, pLeft, pTop)
+                    personalFriendsListNote:SetDrawTier(DT_HIGH)
+
+                    --Add mouse handlers
+                    personalFriendsListNote:SetMouseEnabled(not doHide)
+                    if not doHide then
+                        personalFriendsListNote:SetHandler("OnMouseEnter", function(self)
+                            if noteText ~= nil and noteText ~= "" then
+                                local tooltipText = "|c00FF00FCO|r|cFFFF00Notes|r\n|c8888DD" .. dataTab.displayName .. "|r (" .. dataTab.characterName .. ")\n\n|cFFFFFF" .. noteText .. "|r"
+                                ZO_Tooltips_ShowTextTooltip(personalFriendsListNote, LEFT, tooltipText)
+                            else
+                                ZO_Tooltips_HideTextTooltip()
+                            end
+                        end)
+                        personalFriendsListNote:SetHandler("OnMouseExit", function(self)
+                            ZO_Tooltips_HideTextTooltip()
+                        end)
+                        personalFriendsListNote:SetHandler("OnMouseUp", function(self, button, upInside)
+                            ZO_Tooltips_HideTextTooltip()
+                            if button == MOUSE_BUTTON_INDEX_LEFT and upInside then
+                                FCONotes_AddNote(self, true, false, FCONOTES_LIST_TYPE_FRIENDS_LIST)
+                            end
+                        end)
+                    end
+                end
+            end
+        end
+
+    elseif noteType == FCONOTES_LIST_TYPE_IGNORE_LIST then
+        local standardESOIgnoreListNote = control:GetNamedChild("Note")
+        if standardESOIgnoreListNote ~= nil then
+            local personalIgnoreListNote = control:GetNamedChild("FCONote")
+            local parent                 = WINDOW_MANAGER:GetControlByName(control:GetName(), "")
+            if parent == nil then
+                return true
+            end
+            if personalIgnoreListNote == nil then
+                personalIgnoreListNote = WINDOW_MANAGER:CreateControl(control:GetName() .. "FCONote", parent, CT_TEXTURE)
+            end
+            local iconDataTab = settingsVars.settings.icon[FCONOTES_LIST_TYPE_IGNORE_LIST]
+            local iconTexture = iconDataTab.texture
+            --Control did already exist or was created now
+            if personalIgnoreListNote ~= nil and iconTexture ~= nil then
+                local doHide = false
+                local noteText = ""
+                local dataTab = data or control.dataEntry.data
+                if dataTab.FCOnote == nil or dataTab.FCOnote == "" then
+                    doHide = true
+                elseif dataTab.FCOnote ~= nil then
+                    noteText = dataTab.FCOnote
+                end
+                local pLeft, pTop
+                local pWidth, pHeight
+                local pTexture = textureVars.MARKER_TEXTURES[iconTexture]
+                if pTexture ~= nil and pTexture ~= "" then
+                    --Change the icon's size because it is special?
+                    if textureVars.MARKER_TEXTURES_SIZE[iconTexture] ~= nil then
+                        pWidth = textureVars.MARKER_TEXTURES_SIZE[iconTexture].width or 32
+                        pHeight = textureVars.MARKER_TEXTURES_SIZE[iconTexture].height or 32
+                        pLeft = iconDataTab.position.x + textureVars.MARKER_TEXTURES_SIZE[iconTexture].offsetLeft or 0
+                        pTop = iconDataTab.position.y + textureVars.MARKER_TEXTURES_SIZE[iconTexture].offsetTop or 0
+                    else
+                        pWidth = iconDataTab.size or 32
+                        pHeight = pWidth
+                        pLeft = iconDataTab.position.x or 0
+                        pTop = iconDataTab.position.y or 0
+                    end
+                    --Hide or show the control now
+                    personalIgnoreListNote:SetHidden(doHide)
+                    personalIgnoreListNote:SetDimensions(pWidth, pHeight)
+                    personalIgnoreListNote:SetTexture(pTexture)
+                    local iconColor = iconDataTab.color
+                    personalIgnoreListNote:SetColor(iconColor.r, iconColor.g, iconColor.b, iconColor.a)
+                    personalIgnoreListNote:ClearAnchors()
+                    personalIgnoreListNote:SetAnchor(BOTTOMLEFT, parent, BOTTOMLEFT, pLeft, pTop)
+                    personalIgnoreListNote:SetDrawTier(DT_HIGH)
+
+                    --Add mouse handlers
+                    personalIgnoreListNote:SetMouseEnabled(not doHide)
+                    if not doHide then
+                        personalIgnoreListNote:SetHandler("OnMouseEnter", function(self)
+                            if noteText ~= nil and noteText ~= "" then
+                                local tooltipText = "|c00FF00FCO|r|cFFFF00Notes|r\n|c8888DD" .. dataTab.displayName .. "|r (" .. dataTab.characterName .. ")\n\n|cFFFFFF" .. noteText .. "|r"
+                                ZO_Tooltips_ShowTextTooltip(personalIgnoreListNote, LEFT, tooltipText)
+                            else
+                                ZO_Tooltips_HideTextTooltip()
+                            end
+                        end)
+                        personalIgnoreListNote:SetHandler("OnMouseExit", function(self)
+                            ZO_Tooltips_HideTextTooltip()
+                        end)
+                        personalIgnoreListNote:SetHandler("OnMouseUp", function(self, button, upInside)
+                            ZO_Tooltips_HideTextTooltip()
+                            if button == MOUSE_BUTTON_INDEX_LEFT and upInside then
+                                FCONotes_AddNote(self, true, false, FCONOTES_LIST_TYPE_IGNORE_LIST)
+                            end
+                        end)
+                    end
+                end
+            end
+        end
+    end
+end
+
 
 --Function to update the icons in the guild member rows
-local function FCONotes_UpdateGuildMemberRowIcon(data)
---d("[FCONotes]UpdateGuildMemberRowIcon")
+local function FCONotes_UpdateFriendsListRowIcon(control, data)
+d("[FCONotes]FCONotes_UpdateFriendsListRowIcon")
     if data == nil then return false end
-    local standardESOGuildMemberNote = data:GetNamedChild("Note")
-    if standardESOGuildMemberNote ~= nil then
-        local personalGuildMemberNote = data:GetNamedChild("FCONote")
-        local parent = WINDOW_MANAGER:GetControlByName(data:GetName(), "")
-        if parent == nil then
-            return true
-        end
-        if personalGuildMemberNote == nil then
-            personalGuildMemberNote = WINDOW_MANAGER:CreateControl(data:GetName() .. "FCONote", parent, CT_TEXTURE)
-        end
-        local iconDataTab = settingsVars.settings.icon[1]
-        local iconTexture = iconDataTab.texture
-        --Control did already exist or was created now
-        if personalGuildMemberNote ~= nil and iconTexture ~= nil then
-            local doHide = false
-            local noteText = ""
-            local dataTab = data.dataEntry.data
-            if dataTab.FCOnote == nil or dataTab.FCOnote == "" then
-                doHide = true
-            elseif dataTab.FCOnote ~= nil then
-                noteText = dataTab.FCOnote
-            end
-            local pLeft, pTop
-            local pWidth, pHeight
-            local pTexture = textureVars.MARKER_TEXTURES[iconTexture]
-            if pTexture ~= nil and pTexture ~= "" then
-                --Change the icon's size because it is special?
-                if textureVars.MARKER_TEXTURES_SIZE[iconTexture] ~= nil then
-                    pWidth = textureVars.MARKER_TEXTURES_SIZE[iconTexture].width or 32
-                    pHeight = textureVars.MARKER_TEXTURES_SIZE[iconTexture].height or 32
-                    pLeft = iconDataTab.position.x + textureVars.MARKER_TEXTURES_SIZE[iconTexture].offsetLeft or 0
-                    pTop = iconDataTab.position.y + textureVars.MARKER_TEXTURES_SIZE[iconTexture].offsetTop or 0
-                else
-                    pWidth = iconDataTab.size or 32
-                    pHeight = pWidth
-                    pLeft = iconDataTab.position.x or 0
-                    pTop = iconDataTab.position.y or 0
-                end
-                --Hide or show the control now
-                personalGuildMemberNote:SetHidden(doHide)
-                personalGuildMemberNote:SetDimensions(pWidth, pHeight)
-                personalGuildMemberNote:SetTexture(pTexture)
-                local iconColor = iconDataTab.color
-                personalGuildMemberNote:SetColor(iconColor.r, iconColor.g, iconColor.b, iconColor.a)
-                personalGuildMemberNote:ClearAnchors()
-                personalGuildMemberNote:SetAnchor(BOTTOMLEFT, parent, BOTTOMLEFT, pLeft, pTop)
-                personalGuildMemberNote:SetDrawTier(DT_HIGH)
-
-                --Add mouse handlers
-                personalGuildMemberNote:SetMouseEnabled(not doHide)
-                if not doHide then
-                    personalGuildMemberNote:SetHandler("OnMouseEnter", function(self)
-                        if noteText ~= nil and noteText ~= "" then
-                            local tooltipText = "|c00FF00FCO|r|cFFFF00Notes|r\n|c8888DD" .. dataTab.displayName .. "|r (" .. dataTab.characterName .. ")\n\n|cFFFFFF" .. noteText .. "|r"
-                            ZO_Tooltips_ShowTextTooltip(personalGuildMemberNote, LEFT, tooltipText)
-                        else
-                            ZO_Tooltips_HideTextTooltip()
-                        end
-                    end)
-                    personalGuildMemberNote:SetHandler("OnMouseExit", function(self)
-                        ZO_Tooltips_HideTextTooltip()
-                    end)
-                    personalGuildMemberNote:SetHandler("OnMouseUp", function(self, button, upInside)
-                        ZO_Tooltips_HideTextTooltip()
-                        if button == MOUSE_BUTTON_INDEX_LEFT and upInside then
-                            FCONotes_AddNote(self, true, false)
-                        end
-                    end)
-                end
-            end
-        end
-    end
 end
 
--- Get the guild member information
-local function FCONotes_GetGuildRosterData(activeGuildId, guildMemberAccountName, updateNoteFromSavedVars)
---d("[FCONotes_GetGuildRosterData]")
+-- Get the guild member/friends list/ignore list information
+local function FCONotes_GetListData(noteType, displayName, updateNoteFromSavedVars, data)
+    --d("[FCONotes_GetGuildRosterData]")
+    if noteType == nil then return end
     updateNoteFromSavedVars = updateNoteFromSavedVars or false
-    guildMemberAccountName = guildMemberAccountName or -1
-    if activeGuildId == nil or activeGuildId <= 0 then
-    --Get the active guild ID
-        activeGuildId = GUILD_ROSTER_MANAGER:GetGuildId()
-    end
-    if activeGuildId == nil or activeGuildId <= 0 then
-        return false
-    end
-
---d(">activeGuildId: " .. activeGuildId .. ", guildMemberAccountName: " .. guildMemberAccountName .. ", updateNoteFromSavedVars: " .. tostring(updateNoteFromSavedVars))
-
-    --Get the guild roster list data
-    local guildRosterData = {}
-    if zosVars.guildRosterList ~= nil then
-        --Get's an array with index (guild member) = table with data
-        --each row of guild roster data got index = unique guild member index on this list,
-        -- displayName = @accountname, characterName = character name
-        --The normal guild note that each member sets: ZO_GuildRosterListXRowXNote
-        guildRosterData = zosVars.guildRosterList.data
-    end
-    if guildRosterData == nil then return false end
+    displayName             = displayName or -1
     local settings = settingsVars.settings
-    --Update the personal guild member note from the saved variables?
-    if updateNoteFromSavedVars then
+
+    if noteType == FCONOTES_LIST_TYPE_GUILDS_ROSTER then
         --Check the saved variables
-        if settings.personalGuildNotes == nil then return false end
-        --Check the guild roster row data variables
-        if activeGuildId ~= nil and guildMemberAccountName ~= nil and guildMemberAccountName ~= -1 then
-            --Check the saved variables more precisely
-            if not settings.saveGuildPersonalNotesAccountWide then
-                if settings.personalGuildNotes[activeGuildId] == nil or settings.personalGuildNotes[activeGuildId][guildMemberAccountName] == nil then return false end
-            else
-                if settings.personalGuildNotes[guildMemberAccountName] == nil then return false end
-            end
-        elseif activeGuildId ~= nil then
-            --Check the saved variables more precisely
-            if not settings.saveGuildPersonalNotesAccountWide then
-                if settings.personalGuildNotes[activeGuildId] == nil then return false end
-            end
+        if updateNoteFromSavedVars and settings.personalGuildNotes == nil then return false end
+
+        local activeGuildId = data and data.guildId
+        if activeGuildId == nil or activeGuildId <= 0 then
+            --Get the active guild ID
+            activeGuildId = GUILD_ROSTER_MANAGER:GetGuildId()
         end
-    end
-    local doBreak = false
-    local guildMemberInfo
-    for index, dataTable in ipairs(guildRosterData) do
-        guildMemberInfo = dataTable.data
-        if guildMemberInfo ~= nil then
---d(">[GuildMember] " .. guildMemberInfo.displayName .. " (" .. guildMemberInfo.characterName .. "), ID: " .. guildMemberInfo.index)
-            --Initialize the arrays
-            if guildMemberAccountName ~= nil and guildMemberAccountName ~= -1 then
-                if guildMemberInfo.displayName == guildMemberAccountName then
-                    doBreak = true
-                end
-            end
-            --Update the personal guild member note from the saved variables?
-            if updateNoteFromSavedVars then
-                --Update the personal guild note to the ZOs data structures
-                if guildMemberInfo.FCOnote == nil then guildMemberInfo.FCOnote = "" end
-                --Saved personal guild note for each account or for each account at each guild ID?
+        if activeGuildId == nil or activeGuildId <= 0 then
+            return false
+        end
+        --d(">activeGuildId: " .. activeGuildId .. ", guildMemberAccountName: " .. guildMemberAccountName .. ", updateNoteFromSavedVars: " .. tostring(updateNoteFromSavedVars))
+        --Get the guild roster list data
+        local guildRosterList = zosVars.guildRosterList
+        local guildRosterData = {}
+        if guildRosterList ~= nil then
+            --Get's an array with index (guild member) = table with data
+            --each row of guild roster data got index = unique guild member index on this list,
+            -- displayName = @accountname, characterName = character name
+            --The normal guild note that each member sets: ZO_GuildRosterListXRowXNote
+            guildRosterData = guildRosterList.data
+        end
+        if guildRosterData == nil then return false end
+        --Update the personal guild member note from the saved variables?
+        if updateNoteFromSavedVars then
+            --Check the guild roster row data variables
+            if activeGuildId ~= nil and displayName ~= nil and displayName ~= -1 then
+                --Check the saved variables more precisely
                 if not settings.saveGuildPersonalNotesAccountWide then
-                    guildMemberInfo.FCOnote = settings.personalGuildNotes[activeGuildId][guildMemberInfo.displayName]
+                    if settings.personalGuildNotes[activeGuildId] == nil or settings.personalGuildNotes[activeGuildId][displayName] == nil then return false end
                 else
-                    guildMemberInfo.FCOnote = settings.personalGuildNotes[guildMemberInfo.displayName]
+                    if settings.personalGuildNotes[displayName] == nil then return false end
+                end
+            elseif activeGuildId ~= nil then
+                --Check the saved variables more precisely
+                if not settings.saveGuildPersonalNotesAccountWide then
+                    if settings.personalGuildNotes[activeGuildId] == nil then return false end
                 end
             end
-            --Only go on if we did not change the current guild, as the icons will be updated by help of the callback function for GuildRoster OnSetupRow()
-            if (    preventerVars.lastguildId ~= nil and preventerVars.lastguildId ~= -1 and preventerVars.lastguildId == activeGuildId and guildRosterVars.firstCall == false
-                    or (  preventerVars.lastguildId ~= nil and preventerVars.lastguildId == -1 and guildRosterVars.firstCall == false)
-            ) then
-                --Update the icon's texture, size, color, position, tooltip and handler functions
-                local activeControlData = zosVars.guildRosterList.activeControls[index]
+        end
+        local doBreak = false
+        local guildMemberInfo
+        for index, dataTable in ipairs(guildRosterData) do
+            guildMemberInfo = dataTable.data
+            if guildMemberInfo ~= nil then
+                --d(">[GuildMember] " .. guildMemberInfo.displayName .. " (" .. guildMemberInfo.characterName .. "), ID: " .. guildMemberInfo.index)
+                --Initialize the arrays
+                if displayName ~= nil and displayName ~= -1 then
+                    if guildMemberInfo.displayName == displayName then
+                        doBreak = true
+                    end
+                end
+                --Update the personal guild member note from the saved variables?
+                if updateNoteFromSavedVars then
+                    --Update the personal guild note to the ZOs data structures
+                    if guildMemberInfo.FCOnote == nil then guildMemberInfo.FCOnote = "" end
+                    --Saved personal guild note for each account or for each account at each guild ID?
+                    if not settings.saveGuildPersonalNotesAccountWide then
+                        guildMemberInfo.FCOnote = settings.personalGuildNotes[activeGuildId][guildMemberInfo.displayName]
+                    else
+                        guildMemberInfo.FCOnote = settings.personalGuildNotes[guildMemberInfo.displayName]
+                    end
+                end
+                --Only go on if we did not change the current guild, as the icons will be updated by help of the callback function for GuildRoster OnSetupRow()
+                if (    preventerVars.lastguildId ~= nil and preventerVars.lastguildId ~= -1 and preventerVars.lastguildId == activeGuildId and guildRosterVars.firstCall == false
+                        or (  preventerVars.lastguildId ~= nil and preventerVars.lastguildId == -1 and guildRosterVars.firstCall == false)
+                ) then
+                    --Update the icon's texture, size, color, position, tooltip and handler functions
+                    local activeControlData = guildRosterList.activeControls[index]
+                    if activeControlData ~= nil then
+                        --d(">updating the icon now...")
+                        FCONotes_UpdateNoteRowIcon(FCONOTES_LIST_TYPE_GUILDS_ROSTER, activeControlData)
+                    end
+                end
+            end
+            --Abort here now?
+            if doBreak then
+                break
+            end
+        end
+        return true
+
+
+    elseif noteType == FCONOTES_LIST_TYPE_FRIENDS_LIST then
+        --Check the saved variables
+        if updateNoteFromSavedVars and settings.personalFriendsListNotes == nil then return false end
+
+        local friendsList     = zosVars.friendsList
+        local friendsListData = {}
+        if friendsList ~= nil then
+            friendsListData = friendsList.data
+        end
+        if friendsListData == nil then return false end
+        if updateNoteFromSavedVars then
+            if settings.personalFriendsListNotes[displayName] == nil then return false end
+        end
+        local doBreak = false
+        local friendInfo
+        for index, dataTable in ipairs(friendsListData) do
+            friendInfo = dataTable.data
+            if friendInfo ~= nil then
+                --Initialize the arrays
+                if displayName ~= nil and displayName ~= -1 then
+                    if friendInfo.displayName == displayName then
+                        doBreak = true
+                    end
+                end
+                if updateNoteFromSavedVars then
+                    if friendInfo.FCOnote == nil then friendInfo.FCOnote = "" end
+                    friendInfo.FCOnote = settings.personalFriendsListNotes[friendInfo.displayName]
+                end
+                local activeControlData = friendsList.activeControls[index]
                 if activeControlData ~= nil then
---d(">updating the icon now...")
-                    FCONotes_UpdateGuildMemberRowIcon(activeControlData)
+                    FCONotes_UpdateNoteRowIcon(FCONOTES_LIST_TYPE_FRIENDS_LIST, activeControlData)
                 end
             end
+            --Abort here now?
+            if doBreak then
+                break
+            end
         end
-        --Abort here now?
-        if doBreak then
-            break
+        return true
+
+    elseif noteType == FCONOTES_LIST_TYPE_IGNORE_LIST then
+        --Check the saved variables
+        if updateNoteFromSavedVars and settings.personalIgnoreListNotes == nil then return false end
+
+        local ignoreList     = zosVars.ignoreList
+        local ignoreListData = {}
+        if ignoreList ~= nil then
+            ignoreListData = ignoreList.data
         end
-        --dataTable = {}
-        --guildMemberInfo = {}
+        if ignoreListData == nil then return false end
+        if updateNoteFromSavedVars then
+            if settings.personalIgnoreListNotes[displayName] == nil then return false end
+        end
+        local doBreak = false
+        local ignoredInfo
+        for index, dataTable in ipairs(ignoreListData) do
+            ignoredInfo = dataTable.data
+            if ignoredInfo ~= nil then
+                --Initialize the arrays
+                if displayName ~= nil and displayName ~= -1 then
+                    if ignoredInfo.displayName == displayName then
+                        doBreak = true
+                    end
+                end
+                if updateNoteFromSavedVars then
+                    if ignoredInfo.FCOnote == nil then ignoredInfo.FCOnote = "" end
+                    ignoredInfo.FCOnote = settings.personalIgnoreListNotes[ignoredInfo.displayName]
+                end
+                local activeControlData = ignoreList.activeControls[index]
+                if activeControlData ~= nil then
+                    FCONotes_UpdateNoteRowIcon(FCONOTES_LIST_TYPE_IGNORE_LIST, activeControlData)
+                end
+            end
+            --Abort here now?
+            if doBreak then
+                break
+            end
+        end
+        return true
+
     end
-    return true
+    return false
 end
 
 --Function to save the guild member FCO note now
-local function FCONotes_SetGuildMemberFCONote(activeGuildId, displayName, note)
---d("FCONotes_SetGuildMemberFCONote - displayName: " .. displayName)
-    if activeGuildId == nil then activeGuildId = GUILD_ROSTER_MANAGER:GetGuildId() end
-    if activeGuildId == nil or activeGuildId <= 0 then return false end
+local function FCONotes_SetFCONote(noteType, displayName, note, data)
     if displayName == nil or displayName == "" then return false end
     if note == nil then return false end
     --The note was removed/cleared?
     local noteText = note
---[[
-    if note == "" then
-        noteText = note
-    else
-        noteText = note
-        --Remove special characters from note text
-        --
-    end
-]]
-    --Update the saved variables table with hte new note
+
     local settings = settingsVars.settings
-    if not settings.saveGuildPersonalNotesAccountWide then
-        if settings.personalGuildNotes[activeGuildId] == nil then
-            settingsVars.settings.personalGuildNotes[activeGuildId] = {}
+
+    if noteType == FCONOTES_LIST_TYPE_GUILDS_ROSTER then
+        local activeGuildId = data.guildId
+        --d("FCONotes_SetGuildMemberFCONote - displayName: " .. displayName)
+        if activeGuildId == nil then activeGuildId = GUILD_ROSTER_MANAGER:GetGuildId() end
+        if activeGuildId == nil or activeGuildId <= 0 then return false end
+
+        --Update the saved variables table with hte new note
+        if not settings.saveGuildPersonalNotesAccountWide then
+            if settings.personalGuildNotes[activeGuildId] == nil then
+                settingsVars.settings.personalGuildNotes[activeGuildId] = {}
+            end
+            if settings.personalGuildNotes[activeGuildId][displayName] == nil then
+                settingsVars.settings.personalGuildNotes[activeGuildId][displayName] = ""
+            end
+            settingsVars.settings.personalGuildNotes[activeGuildId][displayName] = noteText
+        else
+            if settings.personalGuildNotes[displayName] == nil then
+                settingsVars.settings.personalGuildNotes[displayName] = ""
+            end
+            settingsVars.settings.personalGuildNotes[displayName] = noteText
+            --d("SavedVars: " .. settingsVars.settings.personalGuildNotes[displayName])
         end
-        if settings.personalGuildNotes[activeGuildId][displayName] == nil then
-            settingsVars.settings.personalGuildNotes[activeGuildId][displayName] = ""
+
+        --Update the data structures for the current guild member
+        if FCONotes_GetListData(noteType, displayName, true, { guildId = activeGuildId }) == false then
+            --d("<abort!")
+            return false
+        else
+            --Update this one, changed icon at the guild roster now
+            if guildRosterVars.lastRowControl ~= nil then
+                --d("SetGuildMemberFCONote - Update icon at row: " .. guildRosterVars.lastRowControl:GetName())
+                FCONotes_UpdateNoteRowIcon(noteType, guildRosterVars.lastRowControl, nil)
+            end
         end
-        settingsVars.settings.personalGuildNotes[activeGuildId][displayName] = noteText
-    else
-        if settings.personalGuildNotes[displayName] == nil then
-            settingsVars.settings.personalGuildNotes[displayName] = ""
+        return true
+
+    elseif noteType == FCONOTES_LIST_TYPE_FRIENDS_LIST then
+        if settings.personalFriendsListNotes[displayName] == nil then
+            settingsVars.settings.personalFriendsListNotes[displayName] = ""
         end
-        settingsVars.settings.personalGuildNotes[displayName] = noteText
---d("SavedVars: " .. settingsVars.settings.personalGuildNotes[displayName])
+        settingsVars.settings.personalFriendsListNotes[displayName] = noteText
+
+        if FCONotes_GetListData(noteType, displayName, true) == false then
+            return false
+        else
+            --Update this one, changed icon at the guild roster now
+            if friendsListVars.lastRowControl ~= nil then
+                FCONotes_UpdateNoteRowIcon(noteType, friendsListVars.lastRowControl, nil)
+            end
+        end
+        return true
+
+    elseif noteType == FCONOTES_LIST_TYPE_IGNORE_LIST then
+        if settings.personalIgnoreListListNotes[displayName] == nil then
+            settingsVars.settings.personalIgnoreListListNotes[displayName] = ""
+        end
+        settingsVars.settings.personalIgnoreListListNotes[displayName] = noteText
+
+        if FCONotes_GetListData(noteType, displayName, true) == false then
+            return false
+        else
+            --Update this one, changed icon at the guild roster now
+            if ignoreListVars.lastRowControl ~= nil then
+                FCONotes_UpdateNoteRowIcon(noteType, ignoreListVars.lastRowControl, nil)
+            end
+        end
+        return true
     end
-    --Update the data structures for the current guild member
-    if not FCONotes_GetGuildRosterData(activeGuildId, displayName, true) then
---d("<abort!")
-        return false
-    else
-        --Update this one, changed icon at the guild roster now
-        if guildRosterVars.lastGuildRosterRowControl ~= nil then
---d("SetGuildMemberFCONote - Update icon at row: " .. guildRosterVars.lastGuildRosterRowControl:GetName())
-            FCONotes_UpdateGuildMemberRowIcon(guildRosterVars.lastGuildRosterRowControl)
-        end
-    end
-    return true
+
+    return
 end
 
 --Callback function for the guild roster FCO note changed
 local function FCONotes_GuildRoster_FCO_Note_Changed(displayName, note)
     local activeGuildId = GUILD_ROSTER_MANAGER:GetGuildId()
     if activeGuildId == nil then return false end
-    FCONotes_SetGuildMemberFCONote(activeGuildId, displayName, note)
-    guildRosterVars.lastGuildRosterRowControl = nil
+    FCONotes_SetFCONote(FCONOTES_LIST_TYPE_GUILDS_ROSTER, displayName, note, { guildId=activeGuildId })
+    guildRosterVars.lastRowControl = nil
 end
 
+--Callback function for the friends list FCO note changed
+local function FCONotes_FriendsList_FCO_Note_Changed(displayName, note)
+    FCONotes_SetFCONote(FCONOTES_LIST_TYPE_FRIENDS_LIST, displayName, note, nil)
+    friendsListVars.lastRowControl = nil
+end
+
+--Callback function for the ignore list FCO note changed
+local function FCONotes_IgnoreList_FCO_Note_Changed(displayName, note)
+    FCONotes_SetFCONote(FCONOTES_LIST_TYPE_IGNORE_LIST, displayName, note, nil)
+    ignoreListVars.lastRowControl = nil
+end
+
+
 --Global function to show personal note dialog
-function FCONotes_AddNote(ctrl, fromKeybind, delete)
-    guildRosterVars.lastGuildRosterRowControl = nil
+function FCONotes_AddNote(ctrl, fromKeybind, delete, noteType)
+    guildRosterVars.lastRowControl = nil
+    friendsListVars.lastRowControl = nil
+    ignoreListVars.lastRowControl = nil
+
+    local isGuildRoster =   guildRosterVars.scene == SCENE_SHOWN
+    local isFriendsList =   friendsListVars.scene == SCENE_SHOWN
+    local isIgnoreList =    ignoreListVars.scene == SCENE_SHOWN
+    noteType = noteType or ((isGuildRoster and FCONOTES_LIST_TYPE_GUILDS_ROSTER) or (isFriendsList and FCONOTES_LIST_TYPE_FRIENDS_LIST) or (isIgnoreList and FCONOTES_LIST_TYPE_IGNORE_LIST))
+    if noteType == nil then return end
+
     if ctrl ~= nil then
         local control = ctrl
         if fromKeybind then
             control = control:GetParent()
         end
         local data = ZO_ScrollList_GetData(control)
-        guildRosterVars.lastGuildRosterRowControl = control
-        local activeGuildId = GUILD_ROSTER_MANAGER:GetGuildId()
+
+        local activeGuildId, callbackFunc
+        if noteType ==  FCONOTES_LIST_TYPE_GUILDS_ROSTER then
+            guildRosterVars.lastRowControl  = control
+            callbackFunc                    = FCONotes_GuildRoster_FCO_Note_Changed
+        elseif noteType ==  FCONOTES_LIST_TYPE_FRIENDS_LIST then
+            friendsListVars.lastRowControl  = control
+            callbackFunc                    = FCONotes_FriendsList_FCO_Note_Changed
+        elseif noteType ==  FCONOTES_LIST_TYPE_IGNORE_LIST then
+            ignoreListVars.lastRowControl   = control
+            callbackFunc                    = FCONotes_IgnoreList_FCO_Note_Changed
+        end
+
         if not delete then
             if data ~= nil then
                 ClearMenu()
-                ZO_Dialogs_ShowDialog("EDIT_NOTE", {displayName = data.displayName, note = data.FCOnote, changedCallback = FCONotes_GuildRoster_FCO_Note_Changed})
+                ZO_Dialogs_ShowDialog("EDIT_NOTE", {displayName = data.displayName, note = data.FCOnote, changedCallback = callbackFunc, noteType=noteType})
             end
         else
             local settings = settingsVars.settings
-            --Saved personal guild notes for each account or for each guild Id and account?
-            if not settings.saveGuildPersonalNotesAccountWide then
-                --Get the active guild ID
-                if activeGuildId == nil then return false end
-                if   settings.personalGuildNotes[activeGuildId] ~= nil
-                 and settings.personalGuildNotes[activeGuildId][data.displayName] ~= nil then
-                    --Backup this note so you can restore it with next ReloadUI
-                    FCONotes_BackupPersonalGuildMemberNotesNow(activeGuildId, data.displayName)
-                    --Delete the personal guild member note now
-                    settingsVars.settings.personalGuildNotes[activeGuildId][data.displayName] = nil
+
+            if noteType == FCONOTES_LIST_TYPE_GUILDS_ROSTER then
+                activeGuildId = GUILD_ROSTER_MANAGER:GetGuildId()
+                --Saved personal guild notes for each account or for each guild Id and account?
+                if not settings.saveGuildPersonalNotesAccountWide then
+                    --Get the active guild ID
+                    if activeGuildId == nil then return false end
+                    if   settings.personalGuildNotes[activeGuildId] ~= nil
+                            and settings.personalGuildNotes[activeGuildId][data.displayName] ~= nil then
+                        --Backup this note so you can restore it with next ReloadUI
+                        FCONotes_BackupPersonalNotesNow(FCONOTES_LIST_TYPE_GUILDS_ROSTER, data.displayName, { guildID = activeGuildId })
+                        --Delete the personal guild member note now
+                        settingsVars.settings.personalGuildNotes[activeGuildId][data.displayName] = nil
+                    end
+                else
+                    if settings.personalGuildNotes[data.displayName] ~= nil then
+                        --Backup this note so you can restore it with next ReloadUI
+                        FCONotes_BackupPersonalNotesNow(FCONOTES_LIST_TYPE_GUILDS_ROSTER, data.displayName, nil)
+
+                        --Delete the personal guild member note now
+                        settingsVars.settings.personalGuildNotes[data.displayName] = nil
+                    end
                 end
-            else
-                if settings.personalGuildNotes[data.displayName] ~= nil then
+            elseif noteType == FCONOTES_LIST_TYPE_FRIENDS_LIST then
+                --Friends list
+                --Saved personal friends list notes
+                if settings.personalFriendsListNotes[data.displayName] ~= nil then
                     --Backup this note so you can restore it with next ReloadUI
-                    FCONotes_BackupPersonalGuildMemberNotesNow(nil, data.displayName)
+                    FCONotes_BackupPersonalNotesNow(noteType, data.displayName)
                     --Delete the personal guild member note now
-                    settingsVars.settings.personalGuildNotes[data.displayName] = nil
+                    settingsVars.settings.personalFriendsListNotes[data.displayName] = nil
+                end
+            elseif noteType == FCONOTES_LIST_TYPE_IGNORE_LIST then
+                --Ignore list
+                --Saved personal ignore list notes
+                if settings.personalIgnoreListNotes[data.displayName] ~= nil then
+                    --Backup this note so you can restore it with next ReloadUI
+                    FCONotes_BackupPersonalNotesNow(listType, data.displayName)
+                    --Delete the personal guild member note now
+                    settingsVars.settings.personalIgnoreListNotes[data.displayName] = nil
                 end
             end
             --Delete the personal guild note now
@@ -490,7 +765,7 @@ local function FCONotes_SendNoteToGuildOfficerChat(noteText, displayName, charac
 end
 
 --Add the new context menu entry "[FCO Notes] Add personal note" for the guild roster row contetx menu
-local function FCONotes_AddContextMenuEntry(ctrl)
+local function FCONotes_AddContextMenuEntry(ctrl, noteType)
 --d("FCONotes_AddContextMenuEntry - Control name: " .. ctrl:GetName())
     local data = ZO_ScrollList_GetData(ctrl)
     if data ~= nil then
@@ -504,7 +779,7 @@ local function FCONotes_AddContextMenuEntry(ctrl)
             AddCustomMenuItem(locVars["context_menu_add_personal_guild_note"],
                 function()
     --d("Add personal note clicked", MENU_ADD_OPTION_LABEL)
-                    FCONotes_AddNote(ctrl, false, false)
+                    FCONotes_AddNote(ctrl, false, false, noteType)
             end)
             --Add a remove context menu too?
             if data.FCOnote ~= "" then
@@ -512,13 +787,16 @@ local function FCONotes_AddContextMenuEntry(ctrl)
                 AddCustomMenuItem(locVars["context_menu_remove_personal_guild_note"],
                     function()
                         --d("Add personal note clicked", MENU_ADD_OPTION_LABEL)
-                        FCONotes_AddNote(ctrl, false, true)
+                        FCONotes_AddNote(ctrl, false, true, noteType)
                 end)
-                --AddMenuItem(localizationVars.fco_notes_loc["context_menu_send_personal_guild_note_to_officer_chat"],
-                AddCustomMenuItem(locVars["context_menu_send_personal_guild_note_to_officer_chat"],
-                    function()
-                        FCONotes_SendNoteToGuildOfficerChat(data.FCOnote, data.displayName, data.characterName)
-                end)
+
+                if noteType == FCONOTES_LIST_TYPE_GUILDS_ROSTER then
+                    --AddMenuItem(localizationVars.fco_notes_loc["context_menu_send_personal_guild_note_to_officer_chat"],
+                    AddCustomMenuItem(locVars["context_menu_send_personal_guild_note_to_officer_chat"],
+                            function()
+                                FCONotes_SendNoteToGuildOfficerChat(data.FCOnote, data.displayName, data.characterName)
+                            end)
+                end
             end
 
             ShowMenu(ctrl)
@@ -533,7 +811,25 @@ local function FCONotes_GuildRosterRow_OnMouseUp(control, button, upInside)
     --Right click/mouse button 2 context menu hook part:
     if button == MOUSE_BUTTON_INDEX_RIGHT and upInside then
         --Add context menu entry
-        FCONotes_AddContextMenuEntry(control)
+        FCONotes_AddContextMenuEntry(control, FCONOTES_LIST_TYPE_GUILDS_ROSTER)
+    end
+end
+
+local function FCONotes_FriendsListRow_OnMouseUp(control, button, upInside)
+    --button 1= left mouse button / 2= right mouse button
+    --Right click/mouse button 2 context menu hook part:
+    if button == MOUSE_BUTTON_INDEX_RIGHT and upInside then
+        --Add context menu entry
+        FCONotes_AddContextMenuEntry(control, FCONOTES_LIST_TYPE_FRIENDS_LIST)
+    end
+end
+
+local function FCONotes_IgnoreListRow_OnMouseUp(control, button, upInside)
+    --button 1= left mouse button / 2= right mouse button
+    --Right click/mouse button 2 context menu hook part:
+    if button == MOUSE_BUTTON_INDEX_RIGHT and upInside then
+        --Add context menu entry
+        FCONotes_AddContextMenuEntry(control, FCONOTES_LIST_TYPE_IGNORE_LIST)
     end
 end
 
@@ -559,11 +855,63 @@ local function FCONotes_GuildRoster_SetupRow(control, data)
         if not ZO_EditNoteDialog:IsHidden() then
             return false
         end
-        FCONotes_UpdateGuildMemberRowIcon(data)
+        FCONotes_UpdateNoteRowIcon(FCONOTES_LIST_TYPE_GUILDS_ROSTER, control, data)
 
         return false
 	--end)
 end
+
+--Callback function for the friends list keyboard, setuprow
+local function FCONotes_FriendsList_SetupRow(control, data)
+	--WrapFunction(FRIENDS_LIST, "SetupRow", function(originalFunction, ...)
+	-- do something before it
+d("[FCONotes_FriendsList_SetupRow] Scene: " .. tostring(friendsListVars.scene) .. "/" .. tostring(SCENE_SHOWING))
+	    if not preventerVars.addonLoaded or friendsListVars.scene == SCENE_SHOWING then return false end
+
+		--Call the original function
+        --Done already before as this is a SecurePostHook
+
+		-- do something after it
+        if data == nil or data.dataEntry == nil or data.dataEntry.data == nil then
+			return false
+		end
+        local data2 = data.dataEntry.data
+d("FriendsList - SetupRow: " .. tos(data2.displayName) .. " (" .. tos(data2.characterName) .. ")")
+        --Do not go on if the edit note dialog is shown
+        if not ZO_EditNoteDialog:IsHidden() then
+            return false
+        end
+        FCONotes_UpdateNoteRowIcon(FCONOTES_LIST_TYPE_FRIENDS_LIST, control, data)
+
+        return false
+	--end)
+end
+
+local function FCONotes_IgnoreList_SetupRow(control, data)
+	--WrapFunction(FRIENDS_LIST, "SetupRow", function(originalFunction, ...)
+	-- do something before it
+d("[FCONotes_IgnoreList_SetupRow] Scene: " .. tostring(ignoreListVars.scene) .. "/" .. tostring(SCENE_SHOWING))
+	    if not preventerVars.addonLoaded or ignoreListVars.scene == SCENE_SHOWING then return false end
+
+		--Call the original function
+        --Done already before as this is a SecurePostHook
+
+		-- do something after it
+        if data == nil or data.dataEntry == nil or data.dataEntry.data == nil then
+			return false
+		end
+        local data2 = data.dataEntry.data
+d("IgnoreList - SetupRow: " .. tos(data2.displayName) .. " (" .. tos(data2.characterName) .. ")")
+        --Do not go on if the edit note dialog is shown
+        if not ZO_EditNoteDialog:IsHidden() then
+            return false
+        end
+        FCONotes_UpdateNoteRowIcon(FCONOTES_LIST_TYPE_IGNORE_LIST, control, data)
+        return false
+	--end)
+
+end
+
 
 local function help()
 	d(localizationVars.fco_notes_loc["chatcommands_info"])
@@ -578,13 +926,17 @@ local function command_handler(arg)
 	if(arg == "help" or arg == "list" or arg == "") then
        	help()
 	elseif(arg == "backup") then
-       	local feedback = FCONotes_BackupPersonalGuildMemberNotesNow()
+       	local feedback = FCONotes_BackupPersonalNotesNow()
         d(localizationVars.fco_notes_loc["chatcommands_backup_feedback_" .. tostring(feedback)])
         if feedback then
             zo_callLater(function() ReloadUI() end, 3000)
         end
-    elseif(arg == "restore") then
-        FCONotes_RestorePersonalGuildMemberNotesNow()
+    elseif(arg == "restoreguild") then
+        FCONotes_RestorePersonalFCONotesNow(FCONOTES_LIST_TYPE_GUILDS_ROSTER)
+    elseif(arg == "restorefriends") then
+        FCONotes_RestorePersonalFCONotesNow(FCONOTES_LIST_TYPE_FRIENDS_LIST)
+    elseif(arg == "restoreignore") then
+        FCONotes_RestorePersonalFCONotesNow(FCONOTES_LIST_TYPE_IGNORE_LIST)
     end
 end
 
@@ -617,7 +969,7 @@ local function FCONotes_GuildRoster_OnGuildIdChanged(guildInfo)
         --we need to manually call the function to read the current guild roster notes here
         zo_callLater(function()
             if SCENE_MANAGER.currentScene.name == "guildRoster" then
-                if not FCONotes_GetGuildRosterData(guildInfo.guildId, -1, true) then
+                if not FCONotes_GetListData(FCONOTES_LIST_TYPE_GUILDS_ROSTER, -1, true, { guildId = guildInfo.guildId }) then
                     --d("[ERROR - FCO Notes] Guild roster data could not be read!")
                 end
             end
@@ -628,9 +980,20 @@ end
 --Global function to copy the control below the mouse cursor, for the keybinds
 function FCONotes_CopyNameUnderControl()
     local mouseOverControl = WINDOW_MANAGER:GetMouseOverControl()
-    if (mouseOverControl:GetName():find("^ZO_GuildRosterList1Row%d+DisplayName*" or "^ZO_GuildRosterList1Row%d%d+DisplayName*" )) then
-        FCONotes_AddNote(mouseOverControl, true, false)
+    local mocName = mouseOverControl:GetName()
+    local noteType
+    if (mocName:find("^ZO_GuildRosterList1Row%d+DisplayName*") or mocName:find("^ZO_GuildRosterList1Row%d%d+DisplayName*")) then
+        noteType = FCONOTES_LIST_TYPE_GUILDS_ROSTER
+    --ZO_KeyboardFriendsListList1Row1DisplayName
+    elseif (mocName:find("^ZO_KeyboardFriendsListList1Row%d+DisplayName*") or mocName:find("^ZO_KeyboardFriendsListList1Row%d%d+DisplayName*")) then
+        noteType = FCONOTES_LIST_TYPE_FRIENDS_LIST
+    --ZO_KeyboardIgnoreListList1Row1
+    elseif (mocName:find("^ZO_KeyboardIgnoreListList1Row%d+DisplayName*") or mocName:find("^ZO_KeyboardIgnoreListList1Row%d%d+DisplayName*")) then
+        noteType = FCONOTES_LIST_TYPE_IGNORE_LIST
     end
+
+    if noteType == nil then return end
+    FCONotes_AddNote(mouseOverControl, true, false, noteType)
 end
 
 --Function for the mouse over keybinds at guild roster member rows
@@ -649,7 +1012,7 @@ local function FCONotes_OnGuildMemberAdded(eventCode, guildId, displayName)
     if guildId ~= nil and displayName ~= nil and displayName ~= "" then
         --Reorganize the notes now
 --d("Reorganize notes now")
-        FCONotes_GetGuildRosterData(guildId, -1, true)
+        FCONotes_GetListData(FCONOTES_LIST_TYPE_GUILDS_ROSTER, -1, true, { guildId = guildId })
     end
 end
 
@@ -681,7 +1044,9 @@ end
 --Callback function for the guild ranks, home and history scenes
 local function FCONotes_Guild_Scenes_Callback(oldState, newState)
     --if the setting is enabled
-    if not settingsVars.settings.showAlwaysGuildRoster then return false end
+    local settings = settingsVars.settings
+    if not settings.enableNotes[FCONOTES_LIST_TYPE_GUILDS_ROSTER] then return end
+    if not settings.showAlwaysGuildRoster then return false end
 
 	--d("[".. SCENE_MANAGER.currentScene.name .."] State: " .. tostring(newState))
 	if newState == SCENE_SHOWING then
@@ -724,6 +1089,19 @@ local function FCONotes_Guild_Scenes_Callback(oldState, newState)
     end
 end
 
+local function FCONotes_Friend_Scenes_Callback(oldState, newState)
+    --if the setting is enabled
+    if not settingsVars.settings.enableNotes[FCONOTES_LIST_TYPE_FRIENDS_LIST] then return end
+    friendsListVars.scene = newState
+end
+
+local function FCONotes_Ignore_Scenes_Callback(oldState, newState)
+    --if the setting is enabled
+    if not settingsVars.settings.enableNotes[FCONOTES_LIST_TYPE_IGNORE_LIST] then return end
+    ignoreListVars.scene = newState
+end
+
+
 --Hooks
 local function hook_functions()
     --======== GUILD EVENTS - Additional addon =================================
@@ -752,7 +1130,7 @@ local function hook_functions()
 
         if newState == SCENE_SHOWING then
             --Get all the data from the guild roster rows
-            if not FCONotes_GetGuildRosterData(nil, -1, true) then
+            if not FCONotes_GetListData(FCONOTES_LIST_TYPE_GUILDS_ROSTER, -1, true, nil) then
                 --d("[ERROR - FCO Notes] Guild roster data could not be read!")
             end
             --Guild roster was shown at least once now so update the variable "first call" to false
@@ -787,13 +1165,34 @@ local function hook_functions()
 
     --======== PreHook Guild ID changed =======================================================================
     ZO_PreHook(GUILD_ROSTER_MANAGER, "OnGuildIdChanged", FCONotes_GuildRoster_OnGuildIdChanged)
-
+    --Setup function of the guild roster keyboard row: Add the new note control
     ZO_PreHook(GUILD_ROSTER_KEYBOARD, "SetupRow", FCONotes_GuildRoster_SetupRow)
 
     --======== PreHook GuildRoster Row OnMouseUp =======================================================================
     --Pre-Hook the handler "OnMouseUp" event for the rowControl of each guild roster row to
     --add a context menu entry
     ZO_PreHook("ZO_KeyboardGuildRosterRow_OnMouseUp", FCONotes_GuildRosterRow_OnMouseUp)
+
+
+    --======== KEYBOARD FRIENDS LIST ===================================================================================
+    --Register a callback function for the friends list scene
+    FRIENDS_LIST_SCENE:RegisterCallback("StateChange", FCONotes_Friend_Scenes_Callback)
+
+    --Setup function of the friendslist row: Add the new note control
+    SecurePostHook(FRIENDS_LIST, "SetupRow", FCONotes_FriendsList_SetupRow)
+
+    --Pre-Hook the handler "OnMouseUp" event for the rowControl
+    ZO_PreHook("ZO_FriendsListRow_OnMouseUp", FCONotes_FriendsListRow_OnMouseUp)
+
+    --======== KEYBOARD IGNORE LIST ====================================================================================
+    --Register a callback function for the ignore list scene
+    IGNORE_LIST_SCENE:RegisterCallback("StateChange", FCONotes_Ignore_Scenes_Callback)
+
+    --Setup function of the friendslist row: Add the new note control
+    SecurePostHook(IGNORE_LIST, "SetupRow", FCONotes_IgnoreList_SetupRow)
+
+    --Pre-Hook the handler "OnMouseUp" event for the rowControl
+    ZO_PreHook("ZO_IgnoreListRow_OnMouseUp", FCONotes_IgnoreListRow_OnMouseUp)
 end
 
 --Map the texture path to the texture ID
@@ -806,6 +1205,16 @@ local function GetFCOTextureId(texturePath)
     end
     return 0
 end
+
+local function buildTextureIdsList()
+    FCON.textureVars.MARKER_TEXTURES_IDS = {}
+    local MARKER_TEXTURES_IDS = FCON.textureVars.MARKER_TEXTURES_IDS
+    for k, _ in ipairs(textureVars.MARKER_TEXTURES) do
+        MARKER_TEXTURES_IDS[k] = k
+    end
+    return MARKER_TEXTURES_IDS
+end
+
 
 -- Build the menu
 local function BuildAddonMenu()
@@ -820,6 +1229,7 @@ local function BuildAddonMenu()
 		slashCommand = "/fcons",
 	}
 
+    local defaults = settingsVars.defaults
     local settings = settingsVars.settings
     local locVars = localizationVars.fco_notes_loc
 
@@ -828,95 +1238,40 @@ local function BuildAddonMenu()
 	    [2] = locVars["options_language_dropdown_selection2"],
 	    [3] = locVars["options_language_dropdown_selection3"],
 	    [4] = locVars["options_language_dropdown_selection4"],
-	    [5] = locVars["options_language_dropdown_selection4"],
+	    [5] = locVars["options_language_dropdown_selection5"],
 	}
+    local languageOptionsValues = {
+        1, 2, 3, 4, 5
+    }
     local savedVariablesOptions = {
     	[1] = locVars["options_savedVariables_dropdown_selection1"],
         [2] = locVars["options_savedVariables_dropdown_selection2"],
     }
-
-    -- Build options menu parts
-    local texturesList = {
-        locVars["options_lock"],
-        locVars["options_gear"],
-        locVars["options_research"],
-        locVars["options_coins"],
-        locVars["options_star"],
-        locVars["options_flag"],
-        locVars["options_boxstar"],
-        locVars["options_medic"],
-        locVars["options_timer"],
-        locVars["options_flask"],
-        locVars["options_cancel_up"],
-        locVars["options_info_up"],
-        locVars["options_pinned_normal"],
-        locVars["options_cadwell_indexicon_gold_up"],
-        locVars["options_cadwell_indexicon_silver_up"],
-        locVars["options_campaignbonus_keepicon"],
-        locVars["options_campaignbonus_scrollicon"],
-        locVars["options_campaignbrowser_columnheader_ad"],
-        locVars["options_campaignbrowser_columnheader_dc"],
-        locVars["options_campaignbrowser_columnheader_ep"],
-        locVars["options_campaignbrowser_guild"],
-        locVars["options_campaignbrowser_indexicon_normal_up"],
-        locVars["options_overview_indexicon_scoring_up"],
-        locVars["options_charactercreate_bodyicon_up"],
-        locVars["options_gearslot_offhand"],
-        locVars["options_gearslot_mainhand"],
-        locVars["options_gearslot_costume"],
-        locVars["options_chat_mail_up"],
-        locVars["options_chat_notification_up"],
-        locVars["options_alchemy_tabicon_reagent_up"],
-        locVars["options_smithing_tabicon_refine_up"],
-        locVars["options_deathrecap_killingblow_icon"],
-        locVars["options_bait_emptyslot"],
-        locVars["options_guildhistory_indexicon_guildbank_up"],
-        locVars["options_guild_indexicon_member_up"],
-        locVars["options_tabicon_roster_up"],
-        locVars["options_poi_dungeon_complete"],
-        locVars["options_poi_groupinstance_complete"],
-        locVars["options_servicepin_magesguild"],
-        locVars["options_servicepin_fightersguild"],
-        locVars["options_lfg_dps_up"],
-        locVars["options_lfg_leader_icon"],
-        locVars["options_lfg_tank_up"],
-        locVars["options_lfg_veterandungeon_up"],
-        locVars["options_lfg_normaldungeon_up"],
-        locVars["options_icon_dualwield"],
-        locVars["options_icon_firestaff"],
-        locVars["options_icon_bows"],
-        locVars["options_icon_2handed"],
-        locVars["options_icon_1handed"],
-        locVars["options_progression_tabicon_backup_inactive"],
-        locVars["options_inventory_tabicon_repair_disabled"],
-        locVars["options_selectedquesthighlight"],
-        locVars["options_writ"],
-        locVars["options_deconstruction"],
-        locVars["options_improvement"],
-        locVars["options_withdran_money"],
-        locVars["options_gold"],
-        locVars["options_guild_bank_access"],
-        locVars["options_intricate"],
+    local savedVariablesOptionsValues = {
+        1, 2,
     }
 
-    local FCONotesSettingsPanel = LAMFCONotes:RegisterAddonPanel(addonName .. "_LAM", panelData)
+    local texturesIdsList = buildTextureIdsList()
 
-    --Filter icon selection
+    -- Build options menu parts
+    local FCONotesSettingsPanel = FCON.LAM:RegisterAddonPanel(addonName .. "_LAM", panelData)
+
+    --Notes icon preview: Update colors at first open
     local CallBackLAMPanelControlsCreated, Preview1
     CallBackLAMPanelControlsCreated = function(panel)
         if panel == FCONotesSettingsPanel then
-            --[[
-            Preview1 = WINDOW_MANAGER:CreateControl(nil, FCONote_Settings_Preview1, CT_TEXTURE)
-            Preview1:SetAnchor(RIGHT, FCONote_Settings_Preview1, LEFT, -10, 10)
-            Preview1:SetTexture(textureVars.MARKER_TEXTURES[settings.icon[1].texture])
-            Preview1:SetDimensions(settings.icon[1].size, settings.icon[1].size)
-            Preview1:SetColor(settings.icon[1].color.r, settings.icon[1].color.g, settings.icon[1].color.b, settings.icon[1].color.a)
-            FCONote_Settings_Preview1.label:SetText(locVars["options_icon1_texture"] .. ": " .. texturesList[settings.icon[1].texture])
-            ]]
-            --Icon 1
-            FCONotes_Settings_Filter1Preview_Select:SetColor(ZO_ColorDef:New(settings.icon[1].color))
-            FCONotes_Settings_Filter1Preview_Select:SetIconSize(settings.icon[1].size)
-            FCONotes_Settings_Filter1Preview_Select.label:SetText(locVars["options_icon1_texture"] .. ": " .. texturesList[settings.icon[1].texture])
+            --Icon FCONOTES_LIST_TYPE_GUILDS_ROSTER
+            FCONotes_Settings_NoteGuildIconPreview:SetColor(ZO_ColorDef:New(settings.icon[FCONOTES_LIST_TYPE_GUILDS_ROSTER].color))
+            FCONotes_Settings_NoteGuildIconPreview:SetIconSize(settings.icon[FCONOTES_LIST_TYPE_GUILDS_ROSTER].size)
+            FCONotes_Settings_NoteGuildIconPreview.label:SetText(locVars["options_icon1_texture"] .. ": " .. settings.icon[FCONOTES_LIST_TYPE_GUILDS_ROSTER].texture)
+            --Icon FCONOTES_LIST_TYPE_FRIENDS_LIST
+            FCONotes_Settings_NoteFriendsIconPreview:SetColor(ZO_ColorDef:New(settings.icon[FCONOTES_LIST_TYPE_FRIENDS_LIST].color))
+            FCONotes_Settings_NoteFriendsIconPreview:SetIconSize(settings.icon[FCONOTES_LIST_TYPE_FRIENDS_LIST].size)
+            FCONotes_Settings_NoteFriendsIconPreview.label:SetText(locVars["options_icon2_texture"] .. ": " .. settings.icon[FCONOTES_LIST_TYPE_FRIENDS_LIST].texture)
+            --Icon FCONOTES_LIST_TYPE_IGNORE_LIST
+            FCONotes_Settings_NoteIgnoreIconPreview:SetColor(ZO_ColorDef:New(settings.icon[FCONOTES_LIST_TYPE_GUILDS_ROSTER].color))
+            FCONotes_Settings_NoteIgnoreIconPreview:SetIconSize(settings.icon[FCONOTES_LIST_TYPE_GUILDS_ROSTER].size)
+            FCONotes_Settings_NoteIgnoreIconPreview.label:SetText(locVars["options_icon3_texture"] .. ": " .. settings.icon[FCONOTES_LIST_TYPE_GUILDS_ROSTER].texture)
 
             CALLBACK_MANAGER:UnregisterCallback("LAM-RefreshPanel", CallBackLAMPanelControlsCreated)
         end
@@ -937,206 +1292,368 @@ local function BuildAddonMenu()
 		{
 			type = 'dropdown',
 			name = locVars["options_language"],
-			tooltip = locVars["options_language_tooltip"],
+			tooltip = locVars["options_language_TT"],
 			choices = languageOptions,
-            getFunc = function() return languageOptions[settingsVars.defaultSettings.language] end,
+            choicesValues = languageOptionsValues,
+            getFunc = function()
+                return settingsVars.defaultSettings.language
+            end,
             setFunc = function(value)
-                for i,v in pairs(languageOptions) do
-                    if v == value then
-                    	settingsVars.defaultSettings.language = i
-                        --Tell the settings that you have manually chosen the language and want to keep it
-                        --Read in function Localization() after ReloadUI()
-                        settings.languageChoosen = true
-                        ReloadUI()
-                    end
-                end
+                settingsVars.defaultSettings.language = value
+                --Tell the settings that you have manually chosen the language and want to keep it
+                --Read in function Localization() after ReloadUI()
+                settings.languageChoosen = true
+                ReloadUI()
             end,
             warning = locVars["options_language_description1"],
 		},
 		{
 			type = 'dropdown',
 			name = locVars["options_savedvariables"],
-			tooltip = locVars["options_savedvariables_tooltip"],
+			tooltip = locVars["options_savedvariables_TT"],
 			choices = savedVariablesOptions,
-            getFunc = function() return savedVariablesOptions[settingsVars.defaultSettings.saveMode] end,
+            choicesValues = savedVariablesOptionsValues,
+            getFunc = function() return settingsVars.defaultSettings.saveMode end,
             setFunc = function(value)
-                for i,v in pairs(savedVariablesOptions) do
-                    if v == value then
-                        settingsVars.defaultSettings.saveMode = i
-                        ReloadUI()
-                    end
-                end
+                settingsVars.defaultSettings.saveMode = value
+                ReloadUI()
             end,
             warning = locVars["options_language_description1"],
+            --requiresReload = true,
 		},
-        {
-        	type = 'description',
-        	text = locVars["options_language_description1"],
-        },
---==============================================================================
-        {
-            type = 'header',
-            name = locVars["options_header_color"],
-        },
-        {
-            type = "colorpicker",
-            name = locVars["options_icon1_color"],
-            tooltip = locVars["options_icon1_color_tooltip"],
-            getFunc = function() return settings.icon[1].color.r, settings.icon[1].color.g, settings.icon[1].color.b, settings.icon[1].color.a end,
-            setFunc = function(r,g,b,a)
-                settings.icon[1].color = {["r"] = r, ["g"] = g, ["b"] = b, ["a"] = a}
-                FCONotes_Settings_Filter1Preview_Select:SetColor(ZO_ColorDef:New(r,g,b,a))
-            end,
-            width="half",
-            default = settings.icon[1].color,
-        },
---[[
-        {
-            type = "slider",
-            name = locVars["options_icon1_texture"],
-            tooltip = locVars["options_icon1_texture_tooltip"],
-            min = 1,
-            max = #texturesList,
-            getFunc = function() return settings.icon[1].texture end,
-            setFunc = function(textureId)
-                settings.icon[1].texture = textureId
-                Preview1:SetTexture(textureVars.MARKER_TEXTURES[textureId])
-                FCONote_Settings_Preview1.label:SetText(locVars["options_icon1_texture"] .. ": " .. texturesList[textureId])
-            end,
-            width="half",
-            default = settings.icon[1].texture,
-            reference = "FCONote_Settings_Preview1"
-        },
-]]
-        {
-            type = "iconpicker",
-            name = locVars["options_icon1_texture"],
-            tooltip = locVars["options_icon1_texture_tooltip"],
-            choices = textureVars.MARKER_TEXTURES,
-            choicesTooltips = texturesList,
-            getFunc = function() return textureVars.MARKER_TEXTURES[settings.icon[1].texture] end,
-            setFunc = function(texturePath)
-                local textureId = GetFCOTextureId(texturePath)
-                if textureId ~= 0 then
-                    settings.icon[1].texture = textureId
-                    FCONotes_Settings_Filter1Preview_Select.label:SetText(locVars["options_icon1_texture"] .. ": " .. texturesList[textureId])
-                end
-            end,
-            maxColumns = 6,
-            visibleRows = 5,
-            iconSize = settings.icon[1].size,
-            width = "half",
-            default = textureVars.MARKER_TEXTURES[settings.icon[1].texture],
-            reference = "FCONotes_Settings_Filter1Preview_Select"
-        },
-        {
-            type = "slider",
-            name = locVars["options_icon1_size"],
-            tooltip = locVars["options_icon1_size_tooltip"],
-            min = 12,
-            max = 64,
-            getFunc = function() return settings.icon[1].size end,
-            setFunc = function(size)
-                settings.icon[1].size = size
-                --Preview1:SetDimensions(size, size)
-            end,
-            width="half",
-            default = settings.icon[1].size,
-        },
-
-        {
-            type = "slider",
-            name = locVars["options_icon1_x"],
-            tooltip = locVars["options_icon1_x_tooltip"],
-            min = -15,
-            max = 800,
-            getFunc = function() return settings.icon[1].position.x end,
-            setFunc = function(offset)
-                settings.icon[1].position.x = offset
-            end,
-            default = settings.icon[1].position.x,
-            width="half",
-        },
-        {
-            type = "slider",
-            name = locVars["options_icon1_y"],
-            tooltip = locVars["options_icon1_y_tooltip"],
-            min = -10,
-            max = 10,
-            getFunc = function() return settings.icon[1].position.y end,
-            setFunc = function(offset)
-                settings.icon[1].position.y = offset
-            end,
-            default = settings.icon[1].position.y,
-            width="half",
-        },
-
-
-        --==============================================================================
-        {
-            type = 'header',
-            name = locVars["options_note_guild_options"],
-        },
-        {
-            type = "checkbox",
-            name = locVars["options_save_guild_notes_account_wide"],
-            tooltip = locVars["options_save_guild_notes_account_wide_tooltip"],
-            getFunc = function() return settings.saveGuildPersonalNotesAccountWide end,
-            setFunc = function(value) settings.saveGuildPersonalNotesAccountWide = not settings.saveGuildPersonalNotesAccountWide
-                --Update all the values and icons now
-                local activeGuildId = GUILD_ROSTER_MANAGER:GetGuildId()
-                FCONotes_GetGuildRosterData(activeGuildId, -1, true)
-            end,
-            default = settings.saveGuildPersonalNotesAccountWide,
-            width="full",
-        },
 
         --==============================================================================
         {
             type = 'header',
             name = locVars["options_header_guild_roster"],
         },
+
+        {
+            type = "checkbox",
+            name = locVars["options_enable_notes_guild_roster"],
+            tooltip = locVars["options_enable_notes_guild_roster_TT"],
+            getFunc = function() return settings.enableNotes[FCONOTES_LIST_TYPE_GUILDS_ROSTER] end,
+            setFunc = function(value) settings.enableNotes[FCONOTES_LIST_TYPE_GUILDS_ROSTER] = value
+            end,
+            default = defaults.enableNotes[FCONOTES_LIST_TYPE_GUILDS_ROSTER],
+            width="full",
+        },
+
         {
             type = "checkbox",
             name = locVars["options_always_open_guild_roster"],
-            tooltip = locVars["options_always_open_guild_roster_tooltip"],
+            tooltip = locVars["options_always_open_guild_roster_TT"],
             getFunc = function() return settings.showAlwaysGuildRoster end,
-            setFunc = function(value) settings.showAlwaysGuildRoster = not settings.showAlwaysGuildRoster
+            setFunc = function(value) settings.showAlwaysGuildRoster = value
             end,
             default = settings.showAlwaysGuildRoster,
             width="full",
         },
+
+        {
+            type = "checkbox",
+            name = locVars["options_save_guild_notes_account_wide"],
+            tooltip = locVars["options_save_guild_notes_account_wide_TT"],
+            getFunc = function() return settings.saveGuildPersonalNotesAccountWide end,
+            setFunc = function(value) settings.saveGuildPersonalNotesAccountWide = value
+                --Update all the values and icons now
+                local activeGuildId = GUILD_ROSTER_MANAGER:GetGuildId()
+                FCONotes_GetListData(FCONOTES_LIST_TYPE_GUILDS_ROSTER, -1, true, { guildId = activeGuildId })
+            end,
+            default = settings.saveGuildPersonalNotesAccountWide,
+            width="full",
+        },
+
+        {
+            type = "colorpicker",
+            name = locVars["options_icon1_color"],
+            tooltip = locVars["options_icon1_color_TT"],
+            getFunc = function() return settings.icon[FCONOTES_LIST_TYPE_GUILDS_ROSTER].color.r, settings.icon[FCONOTES_LIST_TYPE_GUILDS_ROSTER].color.g, settings.icon[FCONOTES_LIST_TYPE_GUILDS_ROSTER].color.b, settings.icon[FCONOTES_LIST_TYPE_GUILDS_ROSTER].color.a end,
+            setFunc = function(r,g,b,a)
+                settings.icon[FCONOTES_LIST_TYPE_GUILDS_ROSTER].color = {["r"] = r, ["g"] = g, ["b"] = b, ["a"] = a}
+                FCONotes_Settings_NoteGuildIconPreview:SetColor(ZO_ColorDef:New(r,g,b,a))
+            end,
+            width="half",
+            default = settings.icon[FCONOTES_LIST_TYPE_GUILDS_ROSTER].color,
+        },
+        {
+            type = "iconpicker",
+            name = locVars["options_icon1_texture"],
+            tooltip = locVars["options_icon1_texture_TT"],
+            choices = textureVars.MARKER_TEXTURES,
+            choicesTooltips = texturesIdsList,
+            getFunc = function() return textureVars.MARKER_TEXTURES[settings.icon[FCONOTES_LIST_TYPE_GUILDS_ROSTER].texture] end,
+            setFunc = function(textureId)
+                if textureId ~= 0 then
+                    settings.icon[FCONOTES_LIST_TYPE_GUILDS_ROSTER].texture = textureId
+                    FCONotes_Settings_NoteGuildIconPreview.label:SetText(locVars["options_icon1_texture"] .. ": " .. textureId)
+                end
+            end,
+            maxColumns = 6,
+            visibleRows = 5,
+            iconSize = settings.icon[FCONOTES_LIST_TYPE_GUILDS_ROSTER].size,
+            width = "half",
+            default = textureVars.MARKER_TEXTURES[settings.icon[FCONOTES_LIST_TYPE_GUILDS_ROSTER].texture],
+            reference = "FCONotes_Settings_NoteGuildIconPreview"
+        },
+        {
+            type = "slider",
+            name = locVars["options_icon1_size"],
+            tooltip = locVars["options_icon1_size_TT"],
+            min = 12,
+            max = 64,
+            getFunc = function() return settings.icon[FCONOTES_LIST_TYPE_GUILDS_ROSTER].size end,
+            setFunc = function(size)
+                settings.icon[FCONOTES_LIST_TYPE_GUILDS_ROSTER].size = size
+                --Preview1:SetDimensions(size, size)
+            end,
+            width="half",
+            default = settings.icon[FCONOTES_LIST_TYPE_GUILDS_ROSTER].size,
+        },
+
+        {
+            type = "slider",
+            name = locVars["options_icon1_x"],
+            tooltip = locVars["options_icon1_x_TT"],
+            min = -15,
+            max = 800,
+            getFunc = function() return settings.icon[FCONOTES_LIST_TYPE_GUILDS_ROSTER].position.x end,
+            setFunc = function(offset)
+                settings.icon[FCONOTES_LIST_TYPE_GUILDS_ROSTER].position.x = offset
+            end,
+            default = settings.icon[FCONOTES_LIST_TYPE_GUILDS_ROSTER].position.x,
+            width="half",
+        },
+        {
+            type = "slider",
+            name = locVars["options_icon1_y"],
+            tooltip = locVars["options_icon1_y_TT"],
+            min = -10,
+            max = 10,
+            getFunc = function() return settings.icon[FCONOTES_LIST_TYPE_GUILDS_ROSTER].position.y end,
+            setFunc = function(offset)
+                settings.icon[FCONOTES_LIST_TYPE_GUILDS_ROSTER].position.y = offset
+            end,
+            default = settings.icon[FCONOTES_LIST_TYPE_GUILDS_ROSTER].position.y,
+            width="half",
+        },
+
+        --==============================================================================================================
+        {
+            type = 'header',
+            name = locVars["options_header_friends_list"],
+        },
+
+        {
+            type = "checkbox",
+            name = locVars["options_enable_notes_friends_list"],
+            tooltip = locVars["options_enable_notes_friends_list_TT"],
+            getFunc = function() return settings.enableNotes[FCONOTES_LIST_TYPE_FRIENDS_LIST] end,
+            setFunc = function(value) settings.enableNotes[FCONOTES_LIST_TYPE_FRIENDS_LIST] = value
+            end,
+            default = defaults.enableNotes[FCONOTES_LIST_TYPE_FRIENDS_LIST],
+            width="full",
+        },
+
+        {
+            type = "colorpicker",
+            name = locVars["options_icon1_color"],
+            tooltip = locVars["options_icon1_color_TT"],
+            getFunc = function() return settings.icon[FCONOTES_LIST_TYPE_FRIENDS_LIST].color.r, settings.icon[FCONOTES_LIST_TYPE_FRIENDS_LIST].color.g, settings.icon[FCONOTES_LIST_TYPE_FRIENDS_LIST].color.b, settings.icon[FCONOTES_LIST_TYPE_FRIENDS_LIST].color.a end,
+            setFunc = function(r,g,b,a)
+                settings.icon[FCONOTES_LIST_TYPE_FRIENDS_LIST].color = {["r"] = r, ["g"] = g, ["b"] = b, ["a"] = a}
+                FCONotes_Settings_NoteFriendsIconPreview:SetColor(ZO_ColorDef:New(r,g,b,a))
+            end,
+            width="half",
+            default = settings.icon[FCONOTES_LIST_TYPE_FRIENDS_LIST].color,
+        },
+        {
+            type = "iconpicker",
+            name = locVars["options_icon2_texture"],
+            tooltip = locVars["options_icon2_texture_TT"],
+            choices = textureVars.MARKER_TEXTURES,
+            choicesTooltips = texturesIdsList,
+            getFunc = function() return textureVars.MARKER_TEXTURES[settings.icon[FCONOTES_LIST_TYPE_FRIENDS_LIST].texture] end,
+            setFunc = function(textureId)
+                if textureId ~= 0 then
+                    settings.icon[FCONOTES_LIST_TYPE_FRIENDS_LIST].texture = textureId
+                    FCONotes_Settings_NoteFriendsIconPreview.label:SetText(locVars["options_icon2_texture"] .. ": " .. textureId)
+                end
+            end,
+            maxColumns = 6,
+            visibleRows = 5,
+            iconSize = settings.icon[FCONOTES_LIST_TYPE_FRIENDS_LIST].size,
+            width = "half",
+            default = textureVars.MARKER_TEXTURES[settings.icon[FCONOTES_LIST_TYPE_FRIENDS_LIST].texture],
+            reference = "FCONotes_Settings_NoteFriendsIconPreview"
+        },
+        {
+            type = "slider",
+            name = locVars["options_icon1_size"],
+            tooltip = locVars["options_icon1_size_TT"],
+            min = 12,
+            max = 64,
+            getFunc = function() return settings.icon[FCONOTES_LIST_TYPE_FRIENDS_LIST].size end,
+            setFunc = function(size)
+                settings.icon[FCONOTES_LIST_TYPE_FRIENDS_LIST].size = size
+                --Preview1:SetDimensions(size, size)
+            end,
+            width="half",
+            default = settings.icon[FCONOTES_LIST_TYPE_FRIENDS_LIST].size,
+        },
+
+        {
+            type = "slider",
+            name = locVars["options_icon1_x"],
+            tooltip = locVars["options_icon1_x_TT"],
+            min = -15,
+            max = 800,
+            getFunc = function() return settings.icon[FCONOTES_LIST_TYPE_FRIENDS_LIST].position.x end,
+            setFunc = function(offset)
+                settings.icon[FCONOTES_LIST_TYPE_FRIENDS_LIST].position.x = offset
+            end,
+            default = settings.icon[FCONOTES_LIST_TYPE_FRIENDS_LIST].position.x,
+            width="half",
+        },
+        {
+            type = "slider",
+            name = locVars["options_icon1_y"],
+            tooltip = locVars["options_icon1_y_TT"],
+            min = -10,
+            max = 10,
+            getFunc = function() return settings.icon[FCONOTES_LIST_TYPE_FRIENDS_LIST].position.y end,
+            setFunc = function(offset)
+                settings.icon[FCONOTES_LIST_TYPE_FRIENDS_LIST].position.y = offset
+            end,
+            default = settings.icon[FCONOTES_LIST_TYPE_FRIENDS_LIST].position.y,
+            width="half",
+        },
+
+        --==============================================================================================================
+        {
+            type = 'header',
+            name = locVars["options_header_ignore_list"],
+        },
+
+        {
+            type = "checkbox",
+            name = locVars["options_enable_notes_ignore_list"],
+            tooltip = locVars["options_enable_notes_ignore_list_TT"],
+            getFunc = function() return settings.enableNotes[FCONOTES_LIST_TYPE_IGNORE_LIST] end,
+            setFunc = function(value) settings.enableNotes[FCONOTES_LIST_TYPE_IGNORE_LIST] = value
+            end,
+            default = defaults.enableNotes[FCONOTES_LIST_TYPE_IGNORE_LIST],
+            width="full",
+        },
+
+        {
+            type = "colorpicker",
+            name = locVars["options_icon1_color"],
+            tooltip = locVars["options_icon1_color_TT"],
+            getFunc = function() return settings.icon[FCONOTES_LIST_TYPE_IGNORE_LIST].color.r, settings.icon[FCONOTES_LIST_TYPE_IGNORE_LIST].color.g, settings.icon[FCONOTES_LIST_TYPE_IGNORE_LIST].color.b, settings.icon[FCONOTES_LIST_TYPE_IGNORE_LIST].color.a end,
+            setFunc = function(r,g,b,a)
+                settings.icon[FCONOTES_LIST_TYPE_IGNORE_LIST].color = {["r"] = r, ["g"] = g, ["b"] = b, ["a"] = a}
+                FCONotes_Settings_NoteIgnoreIconPreview:SetColor(ZO_ColorDef:New(r,g,b,a))
+            end,
+            width="half",
+            default = settings.icon[FCONOTES_LIST_TYPE_IGNORE_LIST].color,
+        },
+        {
+            type = "iconpicker",
+            name = locVars["options_icon3_texture"],
+            tooltip = locVars["options_icon3_texture_TT"],
+            choices = textureVars.MARKER_TEXTURES,
+            choicesTooltips = texturesIdsList,
+            getFunc = function() return textureVars.MARKER_TEXTURES[settings.icon[FCONOTES_LIST_TYPE_IGNORE_LIST].texture] end,
+            setFunc = function(textureId)
+                if textureId ~= 0 then
+                    settings.icon[FCONOTES_LIST_TYPE_IGNORE_LIST].texture = textureId
+                    FCONotes_Settings_NoteIgnoreIconPreview.label:SetText(locVars["options_icon3_texture"] .. ": " .. textureId)
+                end
+            end,
+            maxColumns = 6,
+            visibleRows = 5,
+            iconSize = settings.icon[FCONOTES_LIST_TYPE_IGNORE_LIST].size,
+            width = "half",
+            default = textureVars.MARKER_TEXTURES[settings.icon[FCONOTES_LIST_TYPE_IGNORE_LIST].texture],
+            reference = "FCONotes_Settings_NoteIgnoreIconPreview"
+        },
+        {
+            type = "slider",
+            name = locVars["options_icon1_size"],
+            tooltip = locVars["options_icon1_size_TT"],
+            min = 12,
+            max = 64,
+            getFunc = function() return settings.icon[FCONOTES_LIST_TYPE_IGNORE_LIST].size end,
+            setFunc = function(size)
+                settings.icon[FCONOTES_LIST_TYPE_IGNORE_LIST].size = size
+                --Preview1:SetDimensions(size, size)
+            end,
+            width="half",
+            default = settings.icon[FCONOTES_LIST_TYPE_IGNORE_LIST].size,
+        },
+
+        {
+            type = "slider",
+            name = locVars["options_icon1_x"],
+            tooltip = locVars["options_icon1_x_TT"],
+            min = -15,
+            max = 800,
+            getFunc = function() return settings.icon[FCONOTES_LIST_TYPE_IGNORE_LIST].position.x end,
+            setFunc = function(offset)
+                settings.icon[FCONOTES_LIST_TYPE_IGNORE_LIST].position.x = offset
+            end,
+            default = settings.icon[FCONOTES_LIST_TYPE_IGNORE_LIST].position.x,
+            width="half",
+        },
+        {
+            type = "slider",
+            name = locVars["options_icon1_y"],
+            tooltip = locVars["options_icon1_y_TT"],
+            min = -10,
+            max = 10,
+            getFunc = function() return settings.icon[FCONOTES_LIST_TYPE_IGNORE_LIST].position.y end,
+            setFunc = function(offset)
+                settings.icon[FCONOTES_LIST_TYPE_IGNORE_LIST].position.y = offset
+            end,
+            default = settings.icon[FCONOTES_LIST_TYPE_IGNORE_LIST].position.y,
+            width="half",
+        },
 	}
-	LAMFCONotes:RegisterOptionControls(addonName .. "_LAM", optionsTable)
+	FCON.LAM:RegisterOptionControls(addonName .. "_LAM", optionsTable)
 end
 
 local function Localization()
-	--Was localization already done during keybindings? Then abort here
- 	if preventerVars.KeyBindingTexts == true and preventerVars.gLocalizationDone == true then return end
+    --Was localization already done during keybindings? Then abort here
+    if preventerVars.KeyBindingTexts == true and preventerVars.gLocalizationDone == true then return end
+
+    settingsVars = FCON.settingsVars
+    if settingsVars == nil then return end
 
     --Fallback to english
-	if (settingsVars.defaultSettings.language == nil or (settingsVars.defaultSettings.language ~= 1 and settingsVars.defaultSettings.language ~= 2 and settingsVars.defaultSettings.language ~= 3 and settingsVars.defaultSettings.language ~= 4 and settingsVars.defaultSettings.language ~= 5)) then
-    	settingsVars.defaultSettings.language = 1
+    if settingsVars.defaultSettings.language == nil or (settingsVars.defaultSettings.language < 1 and settingsVars.defaultSettings.language > 5) then
+        settingsVars.defaultSettings.language = 1
     end
-	--Is the standard language english set?
-    if (preventerVars.KeyBindingTexts == true or (settingsVars.defaultSettings.language == 1 and settingsVars.settings.languageChoosen == false)) then
-		local lang = GetCVar("language.2")
-		--Check for supported languages
-		if(lang == "de") then
-	    	settingsVars.defaultSettings.language = 2
-	    elseif (lang == "en") then
-	    	settingsVars.defaultSettings.language = 1
-	    elseif (lang == "fr") then
-	    	settingsVars.defaultSettings.language = 3
-	    elseif (lang == "es") then
-	    	settingsVars.defaultSettings.language = 4
-	    elseif (lang == "it") then
-	    	settingsVars.defaultSettings.language = 5
-		else
-	    	settingsVars.defaultSettings.language = 1
-	    end
-	end
-    localizationVars.fco_notes_loc = FCONotes.fco_notesloc[settingsVars.defaultSettings.language]
+    --Is the standard language english set?
+    if preventerVars.KeyBindingTexts == true or (settingsVars.defaultSettings.language == 1 and settingsVars.settings.languageChoosen == false) then
+        local lang = GetCVar("language.2")
+        --Check for supported languages
+        if lang == "de" then
+            settingsVars.defaultSettings.language = 2
+        elseif lang == "en" then
+            settingsVars.defaultSettings.language = 1
+        elseif lang == "fr" then
+            settingsVars.defaultSettings.language = 3
+        elseif lang == "es" then
+            settingsVars.defaultSettings.language = 4
+        elseif lang == "it" then
+            settingsVars.defaultSettings.language = 5
+        else
+            settingsVars.defaultSettings.language = 1
+        end
+    end
+    localizationVars = FCON.localizationVars
+    localizationVars.fco_notes_loc = FCON.fco_notesloc[settingsVars.defaultSettings.language]
 
     preventerVars.gLocalizationDone = true
 end
@@ -1173,53 +1690,33 @@ local function FCONotes_PlayerActivated(event)
 end
 
 local function LoadSavedVariables()
-    if FCONotes.sv == nil and FCONotes.svLoaded then FCONotes.svLoaded = false end
-    if FCONotes.svLoaded then return end
+    if FCON.svLoaded then
+        if FCON.settingsVars.settings == nil then
+            FCON.svLoaded = false
+        else
+            return
+        end
+    end
 
-    --The default values for the language and save mode
-    local defaultsSettings = {
-        language 	 		    = 1, --Standard: English
-        saveMode     		    = 2, --Standard: Account wide settingsVars.settings
-    }
-
-    local defaults = {
-        --language 	 		       = 1, --Standard: English
-        --saveMode     		       = 2, --Standard: Account wide settingsVars.settings
-        languageChoosen			  = false,
-        useKeybind                = true,
-        saveGuildPersonalNotesAccountWide = false,
-        personalGuildNotes        = {},
-        personalGuildNotesBackup  = {},
-        icon		 		      = {},
-        showAlwaysGuildRoster     = false,
-    }
-
-    --Preset the default icon colors and textures
-    defaults.icon[1] = {}
-    defaults.icon[1].color = {}
-    defaults.icon[1].color   = {["r"] = 1,["g"] = 0.7137255073,["b"] = 0.2274509817,["a"] = 1} -- orange
-    defaults.icon[1].texture = 12 -- (i) symbol
-    defaults.icon[1].size    = textureVars.size
-    defaults.icon[1].position = {}
-    defaults.icon[1].position.x = 800
-    defaults.icon[1].position.y = 0
-
+    local svName = addonVars.savedVariablesName
+    local svVersion = addonVars.addonVersion
+    local defaultSettingsDefaults = settingsVars.defaultSettingsDefaults
+    local defaults = settingsVars.defaults
 
     --Load the user's settingsVars.settings from SavedVariables file -> Account wide of basic version 999 at first
-    settingsVars.defaultSettings = ZO_SavedVars:NewAccountWide(addonVars.savedVariablesName, 999, "SettingsForAll", defaultsSettings)
+    FCON.settingsVars.defaultSettings = ZO_SavedVars:NewAccountWide(svName, 999, "SettingsForAll", defaultSettingsDefaults)
+    settingsVars = FCON.settingsVars
 
     --Check, by help of basic version 999 settingsVars.settings, if the settingsVars.settings should be loaded for each character or account wide
     --Use the current addon version to read the settingsVars.settings now
-    if (settingsVars.defaultSettings.saveMode == 1) then
-        settingsVars.settings = ZO_SavedVars:New(addonVars.savedVariablesName, addonVars.addonVersion , "Settings", defaults )
-    elseif (settingsVars.defaultSettings.saveMode == 2) then
-        settingsVars.settings = ZO_SavedVars:NewAccountWide(addonVars.savedVariablesName, addonVars.addonVersion, "Settings", defaults)
+    if settingsVars.defaultSettings.saveMode == 1 then
+        FCON.settingsVars.settings = ZO_SavedVars:New(svName, svVersion , "Settings", defaults )
     else
-        settingsVars.settings = ZO_SavedVars:NewAccountWide(addonVars.savedVariablesName, addonVars.addonVersion, "Settings", defaults)
+        FCON.settingsVars.settings = ZO_SavedVars:NewAccountWide(svName, svVersion, "Settings", defaults)
     end
+    settingsVars = FCON.settingsVars
 
-    FCONotes.sv = settingsVars
-    FCONotes.svLoaded = true
+    FCON.svLoaded = true
 end
 
 --Addon got loaded
@@ -1232,8 +1729,8 @@ local function FCONotes_Loaded(eventCode, addOnNameOfEachAddonLoaded)
     LoadSavedVariables()
 --=============================================================================================================
 
-    --Backup the actual personal guild notes
-    FCONotes_BackupPersonalGuildMemberNotesNow()
+    --Backup the actual personal guild, friend and ignore list notes
+    FCONotes_BackupPersonalNotesNow(nil, nil, nil)
 
     -- Set Localization
 	preventerVars.KeyBindingTexts = false
@@ -1264,16 +1761,18 @@ end
 --========== GLOBAL FUNCTIONS ==================================================
 
 --Global function to get text for the keybindings etc.
-function FCO_GetNotesLocText(textName, isKeybindingText)
+function FCONotes_GetLocText(textName, isKeybindingText)
 	isKeybindingText = isKeybindingText or false
 
     preventerVars.KeyBindingTexts = isKeybindingText
 
 	--Do the localization now
    	Localization()
+    localizationVars = FCON.localizationVars
+    local fcoNotesLoc = localizationVars.fco_notes_loc
 
-	if textName == nil or localizationVars.fco_notes_loc == nil or localizationVars.fco_notes_loc[textName] == nil then return "" end
-   	return localizationVars.fco_notes_loc[textName]
+	if textName == nil or fcoNotesLoc == nil or fcoNotesLoc[textName] == nil then return "" end
+   	return fcoNotesLoc[textName]
 end
 
 
@@ -1293,7 +1792,7 @@ end
 --                                  If useDialog==false and note was not updated in SavedVariables -> Will return false
 --                                  If useDialog==true and callbackChangedFunc==nil (standard calbackFunc was used) and note was updated in SavedVariables -> Will return true
 --                                  If useDialog==true and callbackChangedFunc~=nil and is function -> your calbackFunc was used -> Will return true
-function FCONotes.SetGuildMemberNote(guildId, displayName, guildMemberNoteText, useDialog, callbackChangedFunc)
+function FCON.SetGuildMemberNote(guildId, displayName, guildMemberNoteText, useDialog, callbackChangedFunc)
     useDialog = useDialog or false
     guildMemberNoteText = guildMemberNoteText or ""
     local retVar = false
@@ -1341,7 +1840,7 @@ end
 --number guildId                        The unique guildId
 --String displayName                    The @accountName
 --returns String noteText
-function FCONotes.GetGuildMemberNote(guildId, displayName)
+function FCON.GetGuildMemberNote(guildId, displayName)
     local guildMemberNote
     LoadSavedVariables()
     local settings = settingsVars.settings
