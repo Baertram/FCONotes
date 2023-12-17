@@ -15,7 +15,6 @@ local guildRosterVars = FCON.guildRosterVars
 local friendsListVars = FCON.friendsListVars
 local ignoreListVars = FCON.ignoreListVars
 local keystripVars = FCON.keystripVars
-local settingsVars = FCON.settingsVars
 local localizationVars = FCON.localizationVars
 local zosVars = FCON.zosVars
 local textureVars = FCON.textureVars
@@ -37,6 +36,7 @@ end
 ]]
 
 --Local helper function to copy a deep-structured table/array
+--[[
 local function deepcopy(orig)
     local orig_type = type(orig)
     local copy
@@ -51,6 +51,7 @@ local function deepcopy(orig)
     end
     return copy
 end
+]]
 
 local function getGuildIndexById(guildId)
 	local numGuilds = GetNumGuilds()
@@ -65,50 +66,54 @@ end
 local function FCONotes_BackupPersonalNotesNow(notesType, displayName, data)
     local backupAll = (notesType == nil and displayName == nil and data == nil and true) or false
     local somethingBackuped = false
+    local settings = FCON.settingsVars.settings
     if backupAll or notesType == FCONOTES_LIST_TYPE_GUILDS_ROSTER then
         --Add only 1 new entry to the backup?
         if displayName ~= nil and displayName ~= "" then
             --Saved for each account name or guild Id + account name?
-            if not settingsVars.settings.saveGuildPersonalNotesAccountWide then
+            if not settings.saveGuildPersonalNotesAccountWide then
                 local guildId = data.guildId
                 if guildId == nil or guildId == -1 then return false end
-                if settingsVars.settings.personalGuildNotesBackup[guildId] == nil then settingsVars.settings.personalGuildNotesBackup[guildId] = {} end
-                settingsVars.settings.personalGuildNotesBackup[guildId][displayName] = {}
-                local noteTable = settingsVars.settings.personalGuildNotes[guildId][displayName]
-                settingsVars.settings.personalGuildNotesBackup[guildId][displayName] = noteTable
+                if settings.personalGuildNotesBackup[guildId] == nil then settings.personalGuildNotesBackup[guildId] = {} end
+                settings.personalGuildNotesBackup[guildId][displayName] = {}
+                local noteTable = settings.personalGuildNotes[guildId][displayName]
+                settings.personalGuildNotesBackup[guildId][displayName] = noteTable
                 somethingBackuped = true
             else
-                local noteTable = settingsVars.settings.personalGuildNotes[displayName]
-                settingsVars.settings.personalGuildNotesBackup[displayName] = noteTable
+                local noteTable = settings.personalGuildNotes[displayName]
+                settings.personalGuildNotesBackup[displayName] = noteTable
                 somethingBackuped = true
             end
         else
             --Add all currently saved personal guild member notes to the backup
-            settingsVars.settings.personalGuildNotesBackup = {}
+            settings.personalGuildNotesBackup = {}
             --Copy the settings table with the personal guild member notes to the backup table now
-            settingsVars.settings.personalGuildNotesBackup = deepcopy(settingsVars.settings.personalGuildNotes)
+            --settings.personalGuildNotesBackup = deepcopy(settings.personalGuildNotes)
+            ZO_ShallowTableCopy(settings.personalGuildNotes, settings.personalGuildNotesBackup)
             somethingBackuped = true
         end
     end
     if backupAll or  notesType == FCONOTES_LIST_TYPE_FRIENDS_LIST then
         if displayName ~= nil and displayName ~= "" then
-            local noteTable = settingsVars.settings.personalFriendsListNotes[displayName]
-            settingsVars.settings.personalFriendsListNotesBackup[displayName] = noteTable
+            local noteTable = settings.personalFriendsListNotes[displayName]
+            settings.personalFriendsListNotesBackup[displayName] = noteTable
             somethingBackuped = true
         else
-            settingsVars.settings.personalFriendsListNotesBackup = {}
-            settingsVars.settings.personalFriendsListNotesBackup = deepcopy(settingsVars.settings.personalFriendsListNotes)
+            settings.personalFriendsListNotesBackup = {}
+            --settings.personalFriendsListNotesBackup = deepcopy(settings.personalFriendsListNotes)
+            ZO_ShallowTableCopy(settings.personalFriendsListNotes, settings.personalFriendsListNotesBackup)
             somethingBackuped = true
         end
     end
     if backupAll or  notesType == FCONOTES_LIST_TYPE_IGNORE_LIST then
         if displayName ~= nil and displayName ~= "" then
-            local noteTable = settingsVars.settings.personalIgnoreListNotes[displayName]
-            settingsVars.settings.personalIgnoreListNotesBackup[displayName] = noteTable
+            local noteTable = settings.personalIgnoreListNotes[displayName]
+            settings.personalIgnoreListNotesBackup[displayName] = noteTable
             somethingBackuped = true
         else
-            settingsVars.settings.personalIgnoreListNotesBackup = {}
-            settingsVars.settings.personalIgnoreListNotesBackup = deepcopy(settingsVars.settings.personalIgnoreListNotes)
+            settings.personalIgnoreListNotesBackup = {}
+            --settings.personalIgnoreListNotesBackup = deepcopy(settings.personalIgnoreListNotes)
+            ZO_ShallowTableCopy(settings.personalIgnoreListNotes, settings.personalIgnoreListNotesBackup)
             somethingBackuped = true
         end
     end
@@ -117,29 +122,32 @@ end
 
 --Function to restore the last saved backup of the personal guild member notes
 local function FCONotes_RestorePersonalFCONotesNow(noteType)
+    local settings = FCON.settingsVars.settings
     if noteType == FCONOTES_LIST_TYPE_GUILDS_ROSTER then
-        if settingsVars.settings.personalGuildNotesBackup ~= nil then
-            settingsVars.settings.personalGuildNotes = settingsVars.settings.personalGuildNotesBackup
+        if settings.personalGuildNotesBackup ~= nil then
+            ZO_ShallowTableCopy(settings.personalGuildNotesBackup, settings.personalGuildNotes)
             --Reloading the UI now to saved variables back to the file
             ReloadUI()
         end
     elseif noteType == FCONOTES_LIST_TYPE_FRIENDS_LIST then
-        if settingsVars.settings.personalFriendsListNotesBackup ~= nil then
-            settingsVars.settings.personalFriendsListNotes = settingsVars.settings.personalFriendsListNotesBackup
+        if settings.personalFriendsListNotesBackup ~= nil then
+            ZO_ShallowTableCopy(settings.personalFriendsListNotesBackup, settings.personalFriendsListNotes)
             --Reloading the UI now to saved variables back to the file
             ReloadUI()
         end
     elseif noteType == FCONOTES_LIST_TYPE_IGNORE_LIST then
-        if settingsVars.settings.personalIgnoreListNotesBackup ~= nil then
-            settingsVars.settings.personalIgnoreListNotes = settingsVars.settings.personalIgnoreListNotesBackup
+        if settings.personalIgnoreListNotesBackup ~= nil then
+            ZO_ShallowTableCopy(settings.personalIgnoreListNotesBackup, settings.personalIgnoreListNotes)
             ReloadUI()
         end
     end
 end
 
 local function FCONotes_UpdateNoteRowIcon(noteType, control, data)
+--d("FCONotes_UpdateNoteRowIcon-noteType: " ..tos(noteType))
     if noteType == nil then return false end
     if control == nil then return end
+    local settings = FCON.settingsVars.settings
 
     if noteType == FCONOTES_LIST_TYPE_GUILDS_ROSTER then
         local standardESOGuildMemberNote = control:GetNamedChild("Note")
@@ -152,7 +160,7 @@ local function FCONotes_UpdateNoteRowIcon(noteType, control, data)
             if personalGuildMemberNote == nil then
                 personalGuildMemberNote = WINDOW_MANAGER:CreateControl(control:GetName() .. "FCONote", parent, CT_TEXTURE)
             end
-            local iconDataTab = settingsVars.settings.icon[FCONOTES_LIST_TYPE_GUILDS_ROSTER]
+            local iconDataTab = settings.icon[FCONOTES_LIST_TYPE_GUILDS_ROSTER]
             local iconTexture = iconDataTab.texture
             --Control did already exist or was created now
             if personalGuildMemberNote ~= nil and iconTexture ~= nil then
@@ -217,6 +225,7 @@ local function FCONotes_UpdateNoteRowIcon(noteType, control, data)
 
 
     elseif noteType == FCONOTES_LIST_TYPE_FRIENDS_LIST then
+d("FCONotes_UpdateNoteRowIcon-noteType: " ..tos(noteType))
         local standardESOFriendsListNote = control:GetNamedChild("Note")
         if standardESOFriendsListNote ~= nil then
             local personalFriendsListNote = control:GetNamedChild("FCONote")
@@ -227,13 +236,15 @@ local function FCONotes_UpdateNoteRowIcon(noteType, control, data)
             if personalFriendsListNote == nil then
                 personalFriendsListNote = WINDOW_MANAGER:CreateControl(control:GetName() .. "FCONote", parent, CT_TEXTURE)
             end
-            local iconDataTab = settingsVars.settings.icon[FCONOTES_LIST_TYPE_FRIENDS_LIST]
+            local iconDataTab = settings.icon[FCONOTES_LIST_TYPE_FRIENDS_LIST]
             local iconTexture = iconDataTab.texture
             --Control did already exist or was created now
             if personalFriendsListNote ~= nil and iconTexture ~= nil then
                 local doHide = false
                 local noteText = ""
                 local dataTab = data or control.dataEntry.data
+
+d(">displayName: " .. tos(dataTab.displayName))
                 if dataTab.FCOnote == nil or dataTab.FCOnote == "" then
                     doHide = true
                 elseif dataTab.FCOnote ~= nil then
@@ -287,6 +298,7 @@ local function FCONotes_UpdateNoteRowIcon(noteType, control, data)
                         end)
                     end
                 end
+d(">doHide: " ..tos(doHide) )
             end
         end
 
@@ -301,7 +313,7 @@ local function FCONotes_UpdateNoteRowIcon(noteType, control, data)
             if personalIgnoreListNote == nil then
                 personalIgnoreListNote = WINDOW_MANAGER:CreateControl(control:GetName() .. "FCONote", parent, CT_TEXTURE)
             end
-            local iconDataTab = settingsVars.settings.icon[FCONOTES_LIST_TYPE_IGNORE_LIST]
+            local iconDataTab = settings.icon[FCONOTES_LIST_TYPE_IGNORE_LIST]
             local iconTexture = iconDataTab.texture
             --Control did already exist or was created now
             if personalIgnoreListNote ~= nil and iconTexture ~= nil then
@@ -373,12 +385,15 @@ local function FCONotes_GetListData(noteType, displayName, updateNoteFromSavedVa
     if noteType == nil then return end
     updateNoteFromSavedVars = updateNoteFromSavedVars or false
     displayName             = displayName or -1
-    local settings = settingsVars.settings
+    local settings = FCON.settingsVars.settings
 
     if noteType == FCONOTES_LIST_TYPE_GUILDS_ROSTER then
         --Check the saved variables
         if updateNoteFromSavedVars and settings.personalGuildNotes == nil then return false end
 
+        local guildRosterList = zosVars.guildRosterList
+
+        --[[
         local activeGuildId = data and data.guildId
         if activeGuildId == nil or activeGuildId <= 0 then
             --Get the active guild ID
@@ -389,7 +404,6 @@ local function FCONotes_GetListData(noteType, displayName, updateNoteFromSavedVa
         end
         --d(">activeGuildId: " .. activeGuildId .. ", guildMemberAccountName: " .. guildMemberAccountName .. ", updateNoteFromSavedVars: " .. tostring(updateNoteFromSavedVars))
         --Get the guild roster list data
-        local guildRosterList = zosVars.guildRosterList
         local guildRosterData = {}
         if guildRosterList ~= nil then
             --Get's an array with index (guild member) = table with data
@@ -456,14 +470,16 @@ local function FCONotes_GetListData(noteType, displayName, updateNoteFromSavedVa
                 break
             end
         end
+        ]]
+        ZO_ScrollList_RefreshVisible(guildRosterList.list or guildRosterList)
         return true
-
 
     elseif noteType == FCONOTES_LIST_TYPE_FRIENDS_LIST then
         --Check the saved variables
         if updateNoteFromSavedVars and settings.personalFriendsListNotes == nil then return false end
 
         local friendsList     = zosVars.friendsList
+        --[[
         local friendsListData = {}
         if friendsList ~= nil then
             friendsListData = friendsList.data
@@ -497,6 +513,8 @@ local function FCONotes_GetListData(noteType, displayName, updateNoteFromSavedVa
                 break
             end
         end
+        ]]
+        ZO_ScrollList_RefreshVisible(friendsList.list or friendsList)
         return true
 
     elseif noteType == FCONOTES_LIST_TYPE_IGNORE_LIST then
@@ -504,6 +522,7 @@ local function FCONotes_GetListData(noteType, displayName, updateNoteFromSavedVa
         if updateNoteFromSavedVars and settings.personalIgnoreListNotes == nil then return false end
 
         local ignoreList     = zosVars.ignoreList
+        --[[
         local ignoreListData = {}
         if ignoreList ~= nil then
             ignoreListData = ignoreList.data
@@ -537,6 +556,8 @@ local function FCONotes_GetListData(noteType, displayName, updateNoteFromSavedVa
                 break
             end
         end
+        ]]
+        ZO_ScrollList_RefreshVisible(ignoreList.list or ignoreList)
         return true
 
     end
@@ -550,7 +571,7 @@ local function FCONotes_SetFCONote(noteType, displayName, note, data)
     --The note was removed/cleared?
     local noteText = note
 
-    local settings = settingsVars.settings
+    local settings = FCON.settingsVars.settings
 
     if noteType == FCONOTES_LIST_TYPE_GUILDS_ROSTER then
         local activeGuildId = data.guildId
@@ -561,18 +582,18 @@ local function FCONotes_SetFCONote(noteType, displayName, note, data)
         --Update the saved variables table with hte new note
         if not settings.saveGuildPersonalNotesAccountWide then
             if settings.personalGuildNotes[activeGuildId] == nil then
-                settingsVars.settings.personalGuildNotes[activeGuildId] = {}
+                settings.personalGuildNotes[activeGuildId] = {}
             end
             if settings.personalGuildNotes[activeGuildId][displayName] == nil then
-                settingsVars.settings.personalGuildNotes[activeGuildId][displayName] = ""
+                settings.personalGuildNotes[activeGuildId][displayName] = ""
             end
-            settingsVars.settings.personalGuildNotes[activeGuildId][displayName] = noteText
+            settings.personalGuildNotes[activeGuildId][displayName] = noteText
         else
             if settings.personalGuildNotes[displayName] == nil then
-                settingsVars.settings.personalGuildNotes[displayName] = ""
+                settings.personalGuildNotes[displayName] = ""
             end
-            settingsVars.settings.personalGuildNotes[displayName] = noteText
-            --d("SavedVars: " .. settingsVars.settings.personalGuildNotes[displayName])
+            settings.personalGuildNotes[displayName] = noteText
+            --d("SavedVars: " .. settings.personalGuildNotes[displayName])
         end
 
         --Update the data structures for the current guild member
@@ -590,9 +611,9 @@ local function FCONotes_SetFCONote(noteType, displayName, note, data)
 
     elseif noteType == FCONOTES_LIST_TYPE_FRIENDS_LIST then
         if settings.personalFriendsListNotes[displayName] == nil then
-            settingsVars.settings.personalFriendsListNotes[displayName] = ""
+            settings.personalFriendsListNotes[displayName] = ""
         end
-        settingsVars.settings.personalFriendsListNotes[displayName] = noteText
+        settings.personalFriendsListNotes[displayName] = noteText
 
         if FCONotes_GetListData(noteType, displayName, true) == false then
             return false
@@ -606,9 +627,9 @@ local function FCONotes_SetFCONote(noteType, displayName, note, data)
 
     elseif noteType == FCONOTES_LIST_TYPE_IGNORE_LIST then
         if settings.personalIgnoreListNotes[displayName] == nil then
-            settingsVars.settings.personalIgnoreListNotes[displayName] = ""
+            settings.personalIgnoreListNotes[displayName] = ""
         end
-        settingsVars.settings.personalIgnoreListNotes[displayName] = noteText
+        settings.personalIgnoreListNotes[displayName] = noteText
 
         if FCONotes_GetListData(noteType, displayName, true) == false then
             return false
@@ -682,7 +703,7 @@ function FCONotes_AddNote(ctrl, fromKeybind, delete, noteType)
                 ZO_Dialogs_ShowDialog("EDIT_NOTE", {displayName = data.displayName, note = data.FCOnote, changedCallback = callbackFunc, noteType=noteType})
             end
         else
-            local settings = settingsVars.settings
+            local settings = FCON.settingsVars.settings
 
             if noteType == FCONOTES_LIST_TYPE_GUILDS_ROSTER then
                 activeGuildId = GUILD_ROSTER_MANAGER:GetGuildId()
@@ -695,7 +716,7 @@ function FCONotes_AddNote(ctrl, fromKeybind, delete, noteType)
                         --Backup this note so you can restore it with next ReloadUI
                         FCONotes_BackupPersonalNotesNow(FCONOTES_LIST_TYPE_GUILDS_ROSTER, data.displayName, { guildID = activeGuildId })
                         --Delete the personal guild member note now
-                        settingsVars.settings.personalGuildNotes[activeGuildId][data.displayName] = nil
+                        settings.personalGuildNotes[activeGuildId][data.displayName] = nil
                     end
                 else
                     if settings.personalGuildNotes[data.displayName] ~= nil then
@@ -703,7 +724,7 @@ function FCONotes_AddNote(ctrl, fromKeybind, delete, noteType)
                         FCONotes_BackupPersonalNotesNow(FCONOTES_LIST_TYPE_GUILDS_ROSTER, data.displayName, nil)
 
                         --Delete the personal guild member note now
-                        settingsVars.settings.personalGuildNotes[data.displayName] = nil
+                        settings.personalGuildNotes[data.displayName] = nil
                     end
                 end
             elseif noteType == FCONOTES_LIST_TYPE_FRIENDS_LIST then
@@ -713,7 +734,7 @@ function FCONotes_AddNote(ctrl, fromKeybind, delete, noteType)
                     --Backup this note so you can restore it with next ReloadUI
                     FCONotes_BackupPersonalNotesNow(noteType, data.displayName)
                     --Delete the personal guild member note now
-                    settingsVars.settings.personalFriendsListNotes[data.displayName] = nil
+                    settings.personalFriendsListNotes[data.displayName] = nil
                 end
             elseif noteType == FCONOTES_LIST_TYPE_IGNORE_LIST then
                 --Ignore list
@@ -722,7 +743,7 @@ function FCONotes_AddNote(ctrl, fromKeybind, delete, noteType)
                     --Backup this note so you can restore it with next ReloadUI
                     FCONotes_BackupPersonalNotesNow(listType, data.displayName)
                     --Delete the personal guild member note now
-                    settingsVars.settings.personalIgnoreListNotes[data.displayName] = nil
+                    settings.personalIgnoreListNotes[data.displayName] = nil
                 end
             end
             --Delete the personal guild note now
@@ -829,81 +850,92 @@ end
 
 --Callback function for the guild roster keyboard, setuprow
 local function FCONotes_GuildRoster_SetupRow(guildRosterObject, control, data)
-	--WrapFunction(GUILD_ROSTER_KEYBOARD, "SetupRow", function(originalFunction, ...)
-	-- do something before it
---d("[FCONotes_GuildRoster_SetupRow] Scene: " .. tostring(guildRosterVars.scene) .. "/" .. tostring(SCENE_SHOWING))
-	    if not preventerVars.addonLoaded or guildRosterVars.scene == SCENE_SHOWING then return false end
+    if not preventerVars.addonLoaded or guildRosterVars.scene ~= SCENE_SHOWING then return false end
+d("[FCONotes_GuildRoster_SetupRow] Scene: " .. tostring(guildRosterVars.scene) .. "/" .. tostring(SCENE_SHOWING) .. ", firstCall: " ..tos(guildRosterVars.firstCall))
 
-		--Call the original function
-		--originalFunction(...)
-
-		-- do something after it
-        if not preventerVars.addonLoaded or ZO_GuildRoster:IsHidden() then
-        	return false
-        end
-        if data == nil or data.dataEntry == nil or data.dataEntry.data == nil then
-			return false
-		end
---d("GuildRoster - SetupRow: " .. data.dataEntry.data.displayName .. " (" .. data.dataEntry.data.characterName .. ")")
-        --Do not go on if the edit note dialog is shown
-        if not ZO_EditNoteDialog:IsHidden() then
+    --[[
+    if not guildRosterVars.firstCall then
+        if ZO_GuildRoster:IsHidden() then
+d(">guild roster is hidden!")
             return false
         end
-        FCONotes_UpdateNoteRowIcon(FCONOTES_LIST_TYPE_GUILDS_ROSTER, control, data)
+    end
+    ]]
 
+    --Do not go on if the edit note dialog is shown
+    if not ZO_EditNoteDialog:IsHidden() then
         return false
-	--end)
+    end
+
+    --Update the note from SV
+    if data ~= nil and data.displayName ~= nil and (data.FCOnote == nil or data.FCOnote == "") then
+d("GuildRoster - SetupRow: " .. tos(data.displayName) .. " (" .. tos(data.characterName) .. ")")
+
+        local settings = FCON.settingsVars.settings
+        local savedNotes
+        if not settings.saveGuildPersonalNotesAccountWide then
+            --Get the actual guildId
+            local activeGuildId = data and data.guildId
+            if activeGuildId == nil or activeGuildId <= 0 then
+                --Get the active guild ID
+                activeGuildId = GUILD_ROSTER_MANAGER:GetGuildId()
+            end
+            if activeGuildId == nil or activeGuildId <= 0 then
+                return false
+            end
+            savedNotes = FCON.settingsVars.settings.personalGuildNotes[activeGuildId]
+        else
+            savedNotes = FCON.settingsVars.settings.personalGuildNotes
+        end
+        local guildPersonalNote = savedNotes ~= nil and savedNotes[data.displayName]
+d(">guildPersonalNote: " ..tos(guildPersonalNote))
+
+        data.FCOnote = guildPersonalNote or ""
+    end
+    FCONotes_UpdateNoteRowIcon(FCONOTES_LIST_TYPE_GUILDS_ROSTER, control, data)
+
+    return false
 end
 
 --Callback function for the friends list keyboard, setuprow
 local function FCONotes_FriendsList_SetupRow(friendListObject, control, data)
-	--WrapFunction(FRIENDS_LIST, "SetupRow", function(originalFunction, ...)
-	-- do something before it
 d("[FCONotes_FriendsList_SetupRow] Scene: " .. tostring(friendsListVars.scene) .. "/" .. tostring(SCENE_SHOWING))
-	    if not preventerVars.addonLoaded or friendsListVars.scene == SCENE_SHOWING then return false end
+    if not preventerVars.addonLoaded or friendsListVars.scene == SCENE_SHOWING then return false end
 
-		--Call the original function
-        --Done already before as this is a SecurePostHook
-
-		-- do something after it
-        if data == nil or data.dataEntry == nil or data.dataEntry.data == nil then
-			return false
-		end
-        local data2 = data.dataEntry.data
-d("FriendsList - SetupRow: " .. tos(data2.displayName) .. " (" .. tos(data2.characterName) .. ")")
-        --Do not go on if the edit note dialog is shown
-        if not ZO_EditNoteDialog:IsHidden() then
-            return false
-        end
-        FCONotes_UpdateNoteRowIcon(FCONOTES_LIST_TYPE_FRIENDS_LIST, control, data)
-
+    --Do not go on if the edit note dialog is shown
+    if not ZO_EditNoteDialog:IsHidden() then
         return false
-	--end)
+    end
+
+    --Update the note from SV
+    if data ~= nil and data.displayName ~= nil and (data.FCOnote == nil or data.FCOnote == "") then
+        local savedNotes = FCON.settingsVars.settings.personalFriendsListNotes
+        local friendPersonalNote = savedNotes ~= nil and savedNotes[data.displayName]
+        data.FCOnote = friendPersonalNote or ""
+    end
+    FCONotes_UpdateNoteRowIcon(FCONOTES_LIST_TYPE_FRIENDS_LIST, control, data)
+
+    return false
 end
 
 local function FCONotes_IgnoreList_SetupRow(ignoreListObject, control, data)
-	--WrapFunction(FRIENDS_LIST, "SetupRow", function(originalFunction, ...)
-	-- do something before it
 d("[FCONotes_IgnoreList_SetupRow] Scene: " .. tostring(ignoreListVars.scene) .. "/" .. tostring(SCENE_SHOWING))
-	    if not preventerVars.addonLoaded or ignoreListVars.scene == SCENE_SHOWING then return false end
+    if not preventerVars.addonLoaded or ignoreListVars.scene == SCENE_SHOWING then return false end
 
-		--Call the original function
-        --Done already before as this is a SecurePostHook
-
-		-- do something after it
-        if data == nil or data.dataEntry == nil or data.dataEntry.data == nil then
-			return false
-		end
-        local data2 = data.dataEntry.data
-d("IgnoreList - SetupRow: " .. tos(data2.displayName) .. " (" .. tos(data2.characterName) .. ")")
-        --Do not go on if the edit note dialog is shown
-        if not ZO_EditNoteDialog:IsHidden() then
-            return false
-        end
-        FCONotes_UpdateNoteRowIcon(FCONOTES_LIST_TYPE_IGNORE_LIST, control, data)
+    --Do not go on if the edit note dialog is shown
+    if not ZO_EditNoteDialog:IsHidden() then
         return false
-	--end)
+    end
 
+    --Update the note from SV
+    if data ~= nil and data.displayName ~= nil and (data.FCOnote == nil or data.FCOnote == "") then
+        local savedNotes         = FCON.settingsVars.settings.personalIgnoreListNotes
+        local ignorePersonalNote = savedNotes ~= nil and savedNotes[data.displayName]
+        data.FCOnote = ignorePersonalNote or ""
+    end
+
+    FCONotes_UpdateNoteRowIcon(FCONOTES_LIST_TYPE_IGNORE_LIST, control, data)
+    return false
 end
 
 
@@ -949,7 +981,7 @@ local function FCONotes_GuildRoster_OnGuildIdChanged(guildInfo)
 	--Change the current scene to guildRoster if not already shown
 	preventerVars.dontChangeSceneVar = false
     --if the setting is enabled
-    if settingsVars.settings.showAlwaysGuildRoster then
+    if FCON.settingsVars.settings.showAlwaysGuildRoster then
 		if not preventerVars.dontChangeSceneVar and not SCENE_MANAGER:IsShowing("guildRoster") then
 			local mainMenuVar = FCONotes_GetMainMenu()
         	mainMenuVar:ShowScene("guildRoster")
@@ -993,7 +1025,7 @@ end
 --Function for the mouse over keybinds at guild roster member rows
 local function FCONotes_GetMouseOverGuildMembers(mouseOverControl)
 	if (not mouseOverControl) then return end
-    if (not ZO_GuildRoster:IsHidden() and settingsVars.settings.useKeybind) then
+    if (not ZO_GuildRoster:IsHidden() and FCON.settingsVars.settings.useKeybind) then
         KEYBIND_STRIP:AddKeybindButtonGroup(keystripVars.GuildRosterAddPersonalNote)
     else
         KEYBIND_STRIP:RemoveKeybindButtonGroup(keystripVars.GuildRosterAddPersonalNote)
@@ -1013,12 +1045,12 @@ end
 --Callback function for the event if a guild member gets removed
 local function FCONotes_OnGuildMemberRemoved(eventCode, guildId, displayName, characterName)
 --d("[GuildMemberRemoved] guildId: " .. guildId .. ", displayName: " .. displayName .. ", characterName: " .. characterName)
-    if not settingsVars.settings.saveGuildPersonalNotesAccountWide
+    if not FCON.settingsVars.settings.saveGuildPersonalNotesAccountWide
        and guildId ~= nil
        and displayName ~= nil and displayName ~= "" then
         --Remove the note about this account in this guild
-        if settingsVars.settings.personalGuildNotes[guildId] ~= nil then
-            settingsVars.settings.personalGuildNotes[guildId][displayName] = nil
+        if FCON.settingsVars.settings.personalGuildNotes[guildId] ~= nil then
+            FCON.settingsVars.settings.personalGuildNotes[guildId][displayName] = nil
         end
     end
 end
@@ -1027,7 +1059,7 @@ end
 local function FCONotes_MainMenuSceneGroupBarButtonClick(ctrl, button, upInside)
 	--d("[FCO Notes] FCONotes_MainMenuSceneGroupBarButtonClick: " .. ctrl:GetName())
     --if the setting is enabled
-    if not settingsVars.settings.showAlwaysGuildRoster then return false end
+    if not FCON.settingsVars.settings.showAlwaysGuildRoster then return false end
     --Button 1 is pressed and mouse is above the control?
     if button == MOUSE_BUTTON_INDEX_LEFT and upInside then
    		preventerVars.buttonPressed = true
@@ -1038,7 +1070,7 @@ end
 --Callback function for the guild ranks, home and history scenes
 local function FCONotes_Guild_Scenes_Callback(oldState, newState)
     --if the setting is enabled
-    local settings = settingsVars.settings
+    local settings = FCON.settingsVars.settings
     if not settings.enableNotes[FCONOTES_LIST_TYPE_GUILDS_ROSTER] then return end
     if not settings.showAlwaysGuildRoster then return false end
 
@@ -1085,13 +1117,13 @@ end
 
 local function FCONotes_Friend_Scenes_Callback(oldState, newState)
     --if the setting is enabled
-    if not settingsVars.settings.enableNotes[FCONOTES_LIST_TYPE_FRIENDS_LIST] then return end
+    if not FCON.settingsVars.settings.enableNotes[FCONOTES_LIST_TYPE_FRIENDS_LIST] then return end
     friendsListVars.scene = newState
 end
 
 local function FCONotes_Ignore_Scenes_Callback(oldState, newState)
     --if the setting is enabled
-    if not settingsVars.settings.enableNotes[FCONOTES_LIST_TYPE_IGNORE_LIST] then return end
+    if not FCON.settingsVars.settings.enableNotes[FCONOTES_LIST_TYPE_IGNORE_LIST] then return end
     ignoreListVars.scene = newState
 end
 
@@ -1118,15 +1150,15 @@ local function hook_functions()
     --======== GUILD ROSTER ====================================================
     --Register a callback function for the guild roster scene
     GUILD_ROSTER_SCENE:RegisterCallback("StateChange", function(oldState, newState)
-	--d("[GUILD ROSTER SCENE] State: " .. tostring(newState))
+d("[GUILD ROSTER SCENE] State: " .. tostring(newState))
         --Guild roster is starting to show
         guildRosterVars.scene = newState
 
         if newState == SCENE_SHOWING then
             --Get all the data from the guild roster rows
-            if not FCONotes_GetListData(FCONOTES_LIST_TYPE_GUILDS_ROSTER, -1, true, nil) then
+            --if not FCONotes_GetListData(FCONOTES_LIST_TYPE_GUILDS_ROSTER, -1, true, nil) then
                 --d("[ERROR - FCO Notes] Guild roster data could not be read!")
-            end
+            --end
             --Guild roster was shown at least once now so update the variable "first call" to false
             if guildRosterVars.firstCall then
                 guildRosterVars.firstCall = false
@@ -1160,7 +1192,7 @@ local function hook_functions()
     --======== PreHook Guild ID changed =======================================================================
     ZO_PreHook(GUILD_ROSTER_MANAGER, "OnGuildIdChanged", FCONotes_GuildRoster_OnGuildIdChanged)
     --Setup function of the guild roster keyboard row: Add the new note control
-    ZO_PreHook(GUILD_ROSTER_KEYBOARD, "SetupRow", FCONotes_GuildRoster_SetupRow)
+    SecurePostHook(GUILD_ROSTER_KEYBOARD, "SetupRow", FCONotes_GuildRoster_SetupRow)
 
     --======== PreHook GuildRoster Row OnMouseUp =======================================================================
     --Pre-Hook the handler "OnMouseUp" event for the rowControl of each guild roster row to
@@ -1183,7 +1215,7 @@ local function hook_functions()
     IGNORE_LIST_SCENE:RegisterCallback("StateChange", FCONotes_Ignore_Scenes_Callback)
 
     --Setup function of the friendslist row: Add the new note control
-    SecurePostHook(IGNORE_LIST, "SetupRow", FCONotes_IgnoreList_SetupRow)
+    SecurePostHook(IGNORE_LIST, "SetupIgnoreEntry", FCONotes_IgnoreList_SetupRow)
 
     --Pre-Hook the handler "OnMouseUp" event for the rowControl
     ZO_PreHook("ZO_IgnoreListRow_OnMouseUp", FCONotes_IgnoreListRow_OnMouseUp)
@@ -1223,8 +1255,8 @@ local function BuildAddonMenu()
 		slashCommand = "/fcons",
 	}
 
-    local defaults = settingsVars.defaults
-    local settings = settingsVars.settings
+    local defaults = FCON.settingsVars.defaults
+    local settings = FCON.settingsVars.settings
     local locVars = localizationVars.fco_notes_loc
 
 	local languageOptions = {
@@ -1290,10 +1322,10 @@ local function BuildAddonMenu()
 			choices = languageOptions,
             choicesValues = languageOptionsValues,
             getFunc = function()
-                return settingsVars.defaultSettings.language
+                return FCON.settingsVars.defaultSettings.language
             end,
             setFunc = function(value)
-                settingsVars.defaultSettings.language = value
+                FCON.settingsVars.defaultSettings.language = value
                 --Tell the settings that you have manually chosen the language and want to keep it
                 --Read in function Localization() after ReloadUI()
                 settings.languageChoosen = true
@@ -1307,9 +1339,9 @@ local function BuildAddonMenu()
 			tooltip = locVars["options_savedvariables_TT"],
 			choices = savedVariablesOptions,
             choicesValues = savedVariablesOptionsValues,
-            getFunc = function() return settingsVars.defaultSettings.saveMode end,
+            getFunc = function() return FCON.settingsVars.defaultSettings.saveMode end,
             setFunc = function(value)
-                settingsVars.defaultSettings.saveMode = value
+                FCON.settingsVars.defaultSettings.saveMode = value
                 ReloadUI()
             end,
             warning = locVars["options_language_description1"],
@@ -1621,33 +1653,33 @@ local function Localization()
     --Was localization already done during keybindings? Then abort here
     if preventerVars.KeyBindingTexts == true and preventerVars.gLocalizationDone == true then return end
 
-    settingsVars = FCON.settingsVars
+    local settingsVars = FCON.settingsVars
     if settingsVars == nil then return end
 
     --Fallback to english
-    if settingsVars.defaultSettings.language == nil or (settingsVars.defaultSettings.language < 1 and settingsVars.defaultSettings.language > 5) then
-        settingsVars.defaultSettings.language = 1
+    if FCON.settingsVars.defaultSettings.language == nil or (FCON.settingsVars.defaultSettings.language < 1 and FCON.settingsVars.defaultSettings.language > 5) then
+        FCON.settingsVars.defaultSettings.language = 1
     end
     --Is the standard language english set?
-    if preventerVars.KeyBindingTexts == true or (settingsVars.defaultSettings.language == 1 and settingsVars.settings.languageChoosen == false) then
+    if preventerVars.KeyBindingTexts == true or (FCON.settingsVars.defaultSettings.language == 1 and FCON.settingsVars.settings.languageChoosen == false) then
         local lang = GetCVar("language.2")
         --Check for supported languages
         if lang == "de" then
-            settingsVars.defaultSettings.language = 2
+            FCON.settingsVars.defaultSettings.language = 2
         elseif lang == "en" then
-            settingsVars.defaultSettings.language = 1
+            FCON.settingsVars.defaultSettings.language = 1
         elseif lang == "fr" then
-            settingsVars.defaultSettings.language = 3
+            FCON.settingsVars.defaultSettings.language = 3
         elseif lang == "es" then
-            settingsVars.defaultSettings.language = 4
+            FCON.settingsVars.defaultSettings.language = 4
         elseif lang == "it" then
-            settingsVars.defaultSettings.language = 5
+            FCON.settingsVars.defaultSettings.language = 5
         else
-            settingsVars.defaultSettings.language = 1
+            FCON.settingsVars.defaultSettings.language = 1
         end
     end
     localizationVars = FCON.localizationVars
-    localizationVars.fco_notes_loc = FCON.fco_notesloc[settingsVars.defaultSettings.language]
+    localizationVars.fco_notes_loc = FCON.fco_notesloc[FCON.settingsVars.defaultSettings.language]
 
     preventerVars.gLocalizationDone = true
 end
@@ -1694,21 +1726,19 @@ local function LoadSavedVariables()
 
     local svName = addonVars.savedVariablesName
     local svVersion = addonVars.addonVersion
-    local defaultSettingsDefaults = settingsVars.defaultSettingsDefaults
-    local defaults = settingsVars.defaults
+    local defaultSettingsDefaults = FCON.settingsVars.defaultSettingsDefaults
+    local defaults = FCON.settingsVars.defaults
 
-    --Load the user's settingsVars.settings from SavedVariables file -> Account wide of basic version 999 at first
+    --Load the user's FCON.settingsVars.settings from SavedVariables file -> Account wide of basic version 999 at first
     FCON.settingsVars.defaultSettings = ZO_SavedVars:NewAccountWide(svName, 999, "SettingsForAll", defaultSettingsDefaults)
-    settingsVars = FCON.settingsVars
 
-    --Check, by help of basic version 999 settingsVars.settings, if the settingsVars.settings should be loaded for each character or account wide
-    --Use the current addon version to read the settingsVars.settings now
-    if settingsVars.defaultSettings.saveMode == 1 then
+    --Check, by help of basic version 999 FCON.settingsVars.settings, if the FCON.settingsVars.settings should be loaded for each character or account wide
+    --Use the current addon version to read the FCON.settingsVars.settings now
+    if FCON.settingsVars.defaultSettings.saveMode == 1 then
         FCON.settingsVars.settings = ZO_SavedVars:New(svName, svVersion , "Settings", defaults )
     else
         FCON.settingsVars.settings = ZO_SavedVars:NewAccountWide(svName, svVersion, "Settings", defaults)
     end
-    settingsVars = FCON.settingsVars
 
     FCON.svLoaded = true
 end
@@ -1716,6 +1746,7 @@ end
 --Addon got loaded
 local function FCONotes_Loaded(eventCode, addOnNameOfEachAddonLoaded)
     if addOnNameOfEachAddonLoaded ~= addonName then return end
+	EVENT_MANAGER:UnregisterForEvent(addonName, EVENT_ADD_ON_LOADED)
 
 --=============================================================================================================
 --	LOAD USER SETTINGS
@@ -1795,7 +1826,7 @@ function FCON.SetGuildMemberNote(guildId, displayName, guildMemberNoteText, useD
     local function updateFCONotesSavedVariables(p_guildId, p_displayName, p_noteText)
         if not p_noteText then p_noteText = "" end
         LoadSavedVariables()
-        local settings = settingsVars.settings
+        local settings = FCON.settingsVars.settings
         if not settings or not settings.personalGuildNotes then return false end
         if not settings.saveGuildPersonalNotesAccountWide then
             settings.personalGuildNotes[p_guildId] = settings.personalGuildNotes[p_guildId] or {}
@@ -1837,7 +1868,7 @@ end
 function FCON.GetGuildMemberNote(guildId, displayName)
     local guildMemberNote
     LoadSavedVariables()
-    local settings = settingsVars.settings
+    local settings = FCON.settingsVars.settings
     if not settings or not settings.personalGuildNotes then return end
     if not settings.saveGuildPersonalNotesAccountWide then
         guildMemberNote = settings.personalGuildNotes[guildId] and settings.personalGuildNotes[guildId][displayName]
