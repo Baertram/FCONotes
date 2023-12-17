@@ -367,12 +367,6 @@ local function FCONotes_UpdateNoteRowIcon(noteType, control, data)
 end
 
 
---Function to update the icons in the guild member rows
-local function FCONotes_UpdateFriendsListRowIcon(control, data)
-d("[FCONotes]FCONotes_UpdateFriendsListRowIcon")
-    if data == nil then return false end
-end
-
 -- Get the guild member/friends list/ignore list information
 local function FCONotes_GetListData(noteType, displayName, updateNoteFromSavedVars, data)
     --d("[FCONotes_GetGuildRosterData]")
@@ -611,10 +605,10 @@ local function FCONotes_SetFCONote(noteType, displayName, note, data)
         return true
 
     elseif noteType == FCONOTES_LIST_TYPE_IGNORE_LIST then
-        if settings.personalIgnoreListListNotes[displayName] == nil then
-            settingsVars.settings.personalIgnoreListListNotes[displayName] = ""
+        if settings.personalIgnoreListNotes[displayName] == nil then
+            settingsVars.settings.personalIgnoreListNotes[displayName] = ""
         end
-        settingsVars.settings.personalIgnoreListListNotes[displayName] = noteText
+        settingsVars.settings.personalIgnoreListNotes[displayName] = noteText
 
         if FCONotes_GetListData(noteType, displayName, true) == false then
             return false

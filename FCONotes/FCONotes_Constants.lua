@@ -117,7 +117,7 @@ settingsVars.defaults	= {
     personalFriendsListNotes            = {},
     personalFriendsListNotesBackup      = {},
 
-    personalIgnoreListListNotes         = {},
+    personalIgnoreListNotes             = {},
     personalIgnoreListNotesBackup       = {},
 }
 
