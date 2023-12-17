@@ -344,7 +344,7 @@ local function FCONotes_UpdateNoteRowIcon(noteType, control, data)
                     if not doHide then
                         personalIgnoreListNote:SetHandler("OnMouseEnter", function(self)
                             if noteText ~= nil and noteText ~= "" then
-                                local tooltipText = "|c00FF00FCO|r|cFFFF00Notes|r\n|c8888DD" .. dataTab.displayName .. "|r (" .. dataTab.characterName .. ")\n\n|cFFFFFF" .. noteText .. "|r"
+                                local tooltipText = "|c00FF00FCO|r|cFFFF00Notes|r\n|c8888DD" .. dataTab.displayName .. "|r\n\n|cFFFFFF" .. noteText .. "|r"
                                 ZO_Tooltips_ShowTextTooltip(personalIgnoreListNote, LEFT, tooltipText)
                             else
                                 ZO_Tooltips_HideTextTooltip()
