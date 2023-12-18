@@ -65,6 +65,9 @@ end
 local function setPersonalNoteToSV(noteType, noteText, displayName, updateData)
     if noteType == nil then return false end
     local settings = FCON.settingsVars.settings
+    local enableNotes = settings.enableNotes
+    if not enableNotes[noteType] then return end
+
     if noteText == "" then noteText = nil end
     local wasChanged = false
 
@@ -95,6 +98,8 @@ end
 local function getPersonalNoteFromSV(noteType, displayName, readData)
     if noteType == nil then return end
     local settings = FCON.settingsVars.settings
+    local enableNotes = settings.enableNotes
+    if not enableNotes[noteType] then return end
 
     if noteType == FCONOTES_LIST_TYPE_GUILDS_ROSTER then
         local activeGuildId = readData ~= nil and readData.guildId
@@ -199,13 +204,15 @@ local function FCONotes_RestorePersonalFCONotesNow(noteType)
 end
 
 local function FCONotes_UpdateNoteRowIcon(noteType, control, data)
---d("[FCONotes_UpdateNoteRowIcon]-noteType: " ..tos(noteType))
+    --d("[FCONotes_UpdateNoteRowIcon]-noteType: " ..tos(noteType))
     if noteType == nil then return false end
     if control == nil then return end
     local settings = FCON.settingsVars.settings
+    local enableNotes = settings.enableNotes
+    if not enableNotes[noteType] then return end
 
     if noteType == FCONOTES_LIST_TYPE_GUILDS_ROSTER then
---FCON._debugDataUpdateNoteRowIcon = data
+        --FCON._debugDataUpdateNoteRowIcon = data
         local standardESOGuildMemberNote = control:GetNamedChild("Note")
         if standardESOGuildMemberNote ~= nil then
             local personalGuildMemberNote = control:GetNamedChild("FCONote")
@@ -233,7 +240,7 @@ local function FCONotes_UpdateNoteRowIcon(noteType, control, data)
                 elseif dataTab.FCOnote ~= nil then
                     noteText = dataTab.FCOnote
                 end
---d(">found FCO icon texture control, text: " ..tos(noteText))
+                --d(">found FCO icon texture control, text: " ..tos(noteText))
                 local pLeft, pTop
                 local pWidth, pHeight
                 local pTexture = textureVars.MARKER_TEXTURES[iconTexture]
@@ -287,7 +294,7 @@ local function FCONotes_UpdateNoteRowIcon(noteType, control, data)
 
 
     elseif noteType == FCONOTES_LIST_TYPE_FRIENDS_LIST then
---d("FCONotes_UpdateNoteRowIcon-noteType: " ..tos(noteType))
+        --d("FCONotes_UpdateNoteRowIcon-noteType: " ..tos(noteType))
         local standardESOFriendsListNote = control:GetNamedChild("Note")
         if standardESOFriendsListNote ~= nil then
             local personalFriendsListNote = control:GetNamedChild("FCONote")
@@ -309,7 +316,7 @@ local function FCONotes_UpdateNoteRowIcon(noteType, control, data)
                     dataTab = control.dataEntry.data
                     dataTab.FCOnote = getPersonalNoteFromSV(noteType, dataTab.displayName, nil)
                 end
---d(">displayName: " .. tos(dataTab.displayName))
+                --d(">displayName: " .. tos(dataTab.displayName))
                 if dataTab.FCOnote == nil or dataTab.FCOnote == "" then
                     doHide = true
                 elseif dataTab.FCOnote ~= nil then
@@ -363,7 +370,7 @@ local function FCONotes_UpdateNoteRowIcon(noteType, control, data)
                         end)
                     end
                 end
---d(">doHide: " ..tos(doHide) )
+                --d(">doHide: " ..tos(doHide) )
             end
         end
 
@@ -455,91 +462,14 @@ local function FCONotes_GetListData(noteType, displayName, updateNoteFromSavedVa
     updateNoteFromSavedVars = updateNoteFromSavedVars or false
     displayName             = displayName or -1
     local settings = FCON.settingsVars.settings
+    local enableNotes = settings.enableNotes
+    if not enableNotes[noteType] then return end
 
     if noteType == FCONOTES_LIST_TYPE_GUILDS_ROSTER then
         --Check the saved variables
         if updateNoteFromSavedVars and settings.personalGuildNotes == nil then return false end
 
         local guildRosterList = zosVars.guildRosterList
-
-        --[[
-        local activeGuildId = data and data.guildId
-        if activeGuildId == nil or activeGuildId <= 0 then
-            --Get the active guild ID
-            activeGuildId = GUILD_ROSTER_MANAGER:GetGuildId()
-        end
-        if activeGuildId == nil or activeGuildId <= 0 then
-            return false
-        end
-        --d(">activeGuildId: " .. activeGuildId .. ", guildMemberAccountName: " .. guildMemberAccountName .. ", updateNoteFromSavedVars: " .. tostring(updateNoteFromSavedVars))
-        --Get the guild roster list data
-        local guildRosterData = {}
-        if guildRosterList ~= nil then
-            --Get's an array with index (guild member) = table with data
-            --each row of guild roster data got index = unique guild member index on this list,
-            -- displayName = @accountname, characterName = character name
-            --The normal guild note that each member sets: ZO_GuildRosterListXRowXNote
-            guildRosterData = guildRosterList.data
-        end
-        if guildRosterData == nil then return false end
-        --Update the personal guild member note from the saved variables?
-        if updateNoteFromSavedVars then
-            --Check the guild roster row data variables
-            if activeGuildId ~= nil and displayName ~= nil and displayName ~= -1 then
-                --Check the saved variables more precisely
-                if not settings.saveGuildPersonalNotesAccountWide then
-                    if settings.personalGuildNotes[activeGuildId] == nil or settings.personalGuildNotes[activeGuildId][displayName] == nil then return false end
-                else
-                    if settings.personalGuildNotes[displayName] == nil then return false end
-                end
-            elseif activeGuildId ~= nil then
-                --Check the saved variables more precisely
-                if not settings.saveGuildPersonalNotesAccountWide then
-                    if settings.personalGuildNotes[activeGuildId] == nil then return false end
-                end
-            end
-        end
-        local doBreak = false
-        local guildMemberInfo
-        for index, dataTable in ipairs(guildRosterData) do
-            guildMemberInfo = dataTable.data
-            if guildMemberInfo ~= nil then
-                --d(">[GuildMember] " .. guildMemberInfo.displayName .. " (" .. guildMemberInfo.characterName .. "), ID: " .. guildMemberInfo.index)
-                --Initialize the arrays
-                if displayName ~= nil and displayName ~= -1 then
-                    if guildMemberInfo.displayName == displayName then
-                        doBreak = true
-                    end
-                end
-                --Update the personal guild member note from the saved variables?
-                if updateNoteFromSavedVars then
-                    --Update the personal guild note to the ZOs data structures
-                    if guildMemberInfo.FCOnote == nil then guildMemberInfo.FCOnote = "" end
-                    --Saved personal guild note for each account or for each account at each guild ID?
-                    if not settings.saveGuildPersonalNotesAccountWide then
-                        guildMemberInfo.FCOnote = settings.personalGuildNotes[activeGuildId][guildMemberInfo.displayName]
-                    else
-                        guildMemberInfo.FCOnote = settings.personalGuildNotes[guildMemberInfo.displayName]
-                    end
-                end
-                --Only go on if we did not change the current guild, as the icons will be updated by help of the callback function for GuildRoster OnSetupRow()
-                if (    preventerVars.lastguildId ~= nil and preventerVars.lastguildId ~= -1 and preventerVars.lastguildId == activeGuildId and guildRosterVars.firstCall == false
-                        or (  preventerVars.lastguildId ~= nil and preventerVars.lastguildId == -1 and guildRosterVars.firstCall == false)
-                ) then
-                    --Update the icon's texture, size, color, position, tooltip and handler functions
-                    local activeControlData = guildRosterList.activeControls[index]
-                    if activeControlData ~= nil then
-                        --d(">updating the icon now...")
-                        FCONotes_UpdateNoteRowIcon(FCONOTES_LIST_TYPE_GUILDS_ROSTER, activeControlData)
-                    end
-                end
-            end
-            --Abort here now?
-            if doBreak then
-                break
-            end
-        end
-        ]]
 --d("<refresh scroll list GUILD ROSTER")
         ZO_ScrollList_RefreshVisible(guildRosterList.list or guildRosterList)
         return true
@@ -549,41 +479,6 @@ local function FCONotes_GetListData(noteType, displayName, updateNoteFromSavedVa
         if updateNoteFromSavedVars and settings.personalFriendsListNotes == nil then return false end
 
         local friendsList     = zosVars.friendsList
-        --[[
-        local friendsListData = {}
-        if friendsList ~= nil then
-            friendsListData = friendsList.data
-        end
-        if friendsListData == nil then return false end
-        if updateNoteFromSavedVars then
-            if settings.personalFriendsListNotes[displayName] == nil then return false end
-        end
-        local doBreak = false
-        local friendInfo
-        for index, dataTable in ipairs(friendsListData) do
-            friendInfo = dataTable.data
-            if friendInfo ~= nil then
-                --Initialize the arrays
-                if displayName ~= nil and displayName ~= -1 then
-                    if friendInfo.displayName == displayName then
-                        doBreak = true
-                    end
-                end
-                if updateNoteFromSavedVars then
-                    if friendInfo.FCOnote == nil then friendInfo.FCOnote = "" end
-                    friendInfo.FCOnote = settings.personalFriendsListNotes[friendInfo.displayName]
-                end
-                local activeControlData = friendsList.activeControls[index]
-                if activeControlData ~= nil then
-                    FCONotes_UpdateNoteRowIcon(FCONOTES_LIST_TYPE_FRIENDS_LIST, activeControlData)
-                end
-            end
-            --Abort here now?
-            if doBreak then
-                break
-            end
-        end
-        ]]
         ZO_ScrollList_RefreshVisible(friendsList.list or friendsList)
         return true
 
@@ -592,41 +487,6 @@ local function FCONotes_GetListData(noteType, displayName, updateNoteFromSavedVa
         if updateNoteFromSavedVars and settings.personalIgnoreListNotes == nil then return false end
 
         local ignoreList     = zosVars.ignoreList
-        --[[
-        local ignoreListData = {}
-        if ignoreList ~= nil then
-            ignoreListData = ignoreList.data
-        end
-        if ignoreListData == nil then return false end
-        if updateNoteFromSavedVars then
-            if settings.personalIgnoreListNotes[displayName] == nil then return false end
-        end
-        local doBreak = false
-        local ignoredInfo
-        for index, dataTable in ipairs(ignoreListData) do
-            ignoredInfo = dataTable.data
-            if ignoredInfo ~= nil then
-                --Initialize the arrays
-                if displayName ~= nil and displayName ~= -1 then
-                    if ignoredInfo.displayName == displayName then
-                        doBreak = true
-                    end
-                end
-                if updateNoteFromSavedVars then
-                    if ignoredInfo.FCOnote == nil then ignoredInfo.FCOnote = "" end
-                    ignoredInfo.FCOnote = settings.personalIgnoreListNotes[ignoredInfo.displayName]
-                end
-                local activeControlData = ignoreList.activeControls[index]
-                if activeControlData ~= nil then
-                    FCONotes_UpdateNoteRowIcon(FCONOTES_LIST_TYPE_IGNORE_LIST, activeControlData)
-                end
-            end
-            --Abort here now?
-            if doBreak then
-                break
-            end
-        end
-        ]]
         ZO_ScrollList_RefreshVisible(ignoreList.list or ignoreList)
         return true
 
@@ -643,7 +503,9 @@ local function FCONotes_SetFCONote(noteType, displayName, note, data)
     --The note was removed/cleared?
     local noteText = note
 
-
+    local settings = FCON.settingsVars.settings
+    local enableNotes = settings.enableNotes
+    if not enableNotes[noteType] then return false end
 
     if noteType == FCONOTES_LIST_TYPE_GUILDS_ROSTER then
         local activeGuildId = data.guildId
@@ -732,6 +594,9 @@ function FCONotes_AddNote(ctrl, fromKeybind, delete, noteType)
     local isIgnoreList =    ignoreListVars.scene == SCENE_SHOWN
     noteType = noteType or ((isGuildRoster and FCONOTES_LIST_TYPE_GUILDS_ROSTER) or (isFriendsList and FCONOTES_LIST_TYPE_FRIENDS_LIST) or (isIgnoreList and FCONOTES_LIST_TYPE_IGNORE_LIST))
     if noteType == nil then return end
+
+    local enableNotes = FCON.settingsVars.settings.enableNotes
+    if not enableNotes[noteType] then return false end
 
     if ctrl ~= nil then
         local control = ctrl
@@ -1189,106 +1054,103 @@ end
 
 --Hooks
 local function hook_functions()
-    --======== GUILD EVENTS - Additional addon =================================
-    --Register a callback function for the guild events scene from the GuildEvents addon
-	if GUILD_EVENTS_SCENE ~= nil then
-	    GUILD_EVENTS_SCENE:RegisterCallback("StateChange", FCONotes_Guild_Scenes_Callback)
-    end
-    --======== GUILD HOME ======================================================
-    --Register a callback function for the guild home scene
-    GUILD_HOME_SCENE:RegisterCallback("StateChange", FCONotes_Guild_Scenes_Callback)
-    --======== GUILD RANKS =====================================================
-    --Register a callback function for the guild home scene
-    GUILD_RANKS_SCENE:RegisterCallback("StateChange", FCONotes_Guild_Scenes_Callback)
-    --======== GUILD HISTORY ===================================================
-    --Register a callback function for the guild home scene
-    GUILD_HISTORY_SCENE:RegisterCallback("StateChange", FCONotes_Guild_Scenes_Callback)
-    --======== GUILD HERALDRY ==================================================
-    --Register a callback function for the guild home scene
-    GUILD_HERALDRY_SCENE:RegisterCallback("StateChange", FCONotes_Guild_Scenes_Callback)
-    --======== GUILD ROSTER ====================================================
-    --Register a callback function for the guild roster scene
-    GUILD_ROSTER_SCENE:RegisterCallback("StateChange", function(oldState, newState)
---d("[GUILD ROSTER SCENE] State: " .. tostring(newState))
-        --Guild roster is starting to show
-        guildRosterVars.scene = newState
+    local enableNotes = FCON.settingsVars.settings.enableNotes
+    if enableNotes[FCONOTES_LIST_TYPE_GUILDS_ROSTER] then
+        --======== GUILD EVENTS - Additional addon =================================
+        --Register a callback function for the guild events scene from the GuildEvents addon
+        if GUILD_EVENTS_SCENE ~= nil then
+            GUILD_EVENTS_SCENE:RegisterCallback("StateChange", FCONotes_Guild_Scenes_Callback)
+        end
+        --======== GUILD HOME ======================================================
+        --Register a callback function for the guild home scene
+        GUILD_HOME_SCENE:RegisterCallback("StateChange", FCONotes_Guild_Scenes_Callback)
+        --======== GUILD RANKS =====================================================
+        --Register a callback function for the guild home scene
+        GUILD_RANKS_SCENE:RegisterCallback("StateChange", FCONotes_Guild_Scenes_Callback)
+        --======== GUILD HISTORY ===================================================
+        --Register a callback function for the guild home scene
+        GUILD_HISTORY_SCENE:RegisterCallback("StateChange", FCONotes_Guild_Scenes_Callback)
+        --======== GUILD HERALDRY ==================================================
+        --Register a callback function for the guild home scene
+        GUILD_HERALDRY_SCENE:RegisterCallback("StateChange", FCONotes_Guild_Scenes_Callback)
+        --======== GUILD ROSTER ====================================================
+        --Register a callback function for the guild roster scene
+        GUILD_ROSTER_SCENE:RegisterCallback("StateChange", function(oldState, newState)
+            --d("[GUILD ROSTER SCENE] State: " .. tostring(newState))
+            --Guild roster is starting to show
+            guildRosterVars.scene = newState
 
-        if newState == SCENE_SHOWING then
-            --Get all the data from the guild roster rows
-            --if not FCONotes_GetListData(FCONOTES_LIST_TYPE_GUILDS_ROSTER, -1, true, nil) then
+            if newState == SCENE_SHOWING then
+                --Get all the data from the guild roster rows
+                --if not FCONotes_GetListData(FCONOTES_LIST_TYPE_GUILDS_ROSTER, -1, true, nil) then
                 --d("[ERROR - FCO Notes] Guild roster data could not be read!")
-            --end
-            --Guild roster was shown at least once now so update the variable "first call" to false
-            if guildRosterVars.firstCall then
-                guildRosterVars.firstCall = false
+                --end
+                --Guild roster was shown at least once now so update the variable "first call" to false
+                if guildRosterVars.firstCall then
+                    guildRosterVars.firstCall = false
+                end
+
+            elseif newState == SCENE_SHOWN then
+                --Reset the preventer variable
+                preventerVars.dontChangeSceneVar = false
+                preventerVars.buttonPressed		 = false
+
+            elseif newState == SCENE_HIDING then
+                --Hide possibly shown tooltips
+                ZO_Tooltips_HideTextTooltip()
             end
+        end)
 
-        elseif newState == SCENE_SHOWN then
-	    	--Reset the preventer variable
-	        preventerVars.dontChangeSceneVar = false
-            preventerVars.buttonPressed		 = false
+        --PreHook the MouseEnter and Exit functions for the guild roster list rows + names in the rows
+        ZO_PreHook("ZO_KeyboardGuildRosterRowDisplayName_OnMouseEnter", function(control)
+            --d("Mouse enter guild roster name: " .. control:GetName())
+            FCONotes_GetMouseOverGuildMembers(control)
+        end)
+        ZO_PreHook("ZO_KeyboardGuildRosterRowDisplayName_OnMouseExit", function(control)
+            --d("Mouse exit guild roster  name: " .. control:GetName())
+            KEYBIND_STRIP:RemoveKeybindButtonGroup(keystripVars.GuildRosterAddPersonalNote)
+        end)
+        ZO_PreHook("ZO_KeyboardGuildRosterRow_OnMouseExit", function(control)
+            --d("Mouse exit guild roster row: " .. control:GetName())
+            KEYBIND_STRIP:RemoveKeybindButtonGroup(keystripVars.GuildRosterAddPersonalNote)
+        end)
 
-        elseif newState == SCENE_HIDING then
-            --Hide possibly shown tooltips
-            ZO_Tooltips_HideTextTooltip()
-        end
-    end)
+        --======== PreHook Guild ID changed =======================================================================
+        ZO_PreHook(GUILD_ROSTER_MANAGER, "OnGuildIdChanged", FCONotes_GuildRoster_OnGuildIdChanged)
+        --Setup function of the guild roster keyboard row: Add the new note control
+        SecurePostHook(GUILD_ROSTER_KEYBOARD, "SetupRow", FCONotes_GuildRoster_SetupRow)
 
-    --PreHook the MouseEnter and Exit functions for the guild roster list rows + names in the rows
-    ZO_PreHook("ZO_KeyboardGuildRosterRowDisplayName_OnMouseEnter", function(control)
-        --d("Mouse enter guild roster name: " .. control:GetName())
-        FCONotes_GetMouseOverGuildMembers(control)
-    end)
-    ZO_PreHook("ZO_KeyboardGuildRosterRowDisplayName_OnMouseExit", function(control)
-        --d("Mouse exit guild roster  name: " .. control:GetName())
-        KEYBIND_STRIP:RemoveKeybindButtonGroup(keystripVars.GuildRosterAddPersonalNote)
-    end)
-    ZO_PreHook("ZO_KeyboardGuildRosterRow_OnMouseExit", function(control)
-        --d("Mouse exit guild roster row: " .. control:GetName())
-        KEYBIND_STRIP:RemoveKeybindButtonGroup(keystripVars.GuildRosterAddPersonalNote)
-    end)
-
-    --======== PreHook Guild ID changed =======================================================================
-    ZO_PreHook(GUILD_ROSTER_MANAGER, "OnGuildIdChanged", FCONotes_GuildRoster_OnGuildIdChanged)
-    --Setup function of the guild roster keyboard row: Add the new note control
-    SecurePostHook(GUILD_ROSTER_KEYBOARD, "SetupRow", FCONotes_GuildRoster_SetupRow)
-
-    --======== PreHook GuildRoster Row OnMouseUp =======================================================================
-    --Pre-Hook the handler "OnMouseUp" event for the rowControl of each guild roster row to
-    --add a context menu entry
-    ZO_PreHook("ZO_KeyboardGuildRosterRow_OnMouseUp", FCONotes_GuildRosterRow_OnMouseUp)
-
-
-    --======== KEYBOARD FRIENDS LIST ===================================================================================
-    --Register a callback function for the friends list scene
-    FRIENDS_LIST_SCENE:RegisterCallback("StateChange", FCONotes_Friend_Scenes_Callback)
-
-    --Setup function of the friendslist row: Add the new note control
-    SecurePostHook(FRIENDS_LIST, "SetupRow", FCONotes_FriendsList_SetupRow)
-
-    --Pre-Hook the handler "OnMouseUp" event for the rowControl
-    ZO_PreHook("ZO_FriendsListRow_OnMouseUp", FCONotes_FriendsListRow_OnMouseUp)
-
-    --======== KEYBOARD IGNORE LIST ====================================================================================
-    --Register a callback function for the ignore list scene
-    IGNORE_LIST_SCENE:RegisterCallback("StateChange", FCONotes_Ignore_Scenes_Callback)
-
-    --Setup function of the friendslist row: Add the new note control
-    SecurePostHook(IGNORE_LIST, "SetupIgnoreEntry", FCONotes_IgnoreList_SetupRow)
-
-    --Pre-Hook the handler "OnMouseUp" event for the rowControl
-    ZO_PreHook("ZO_IgnoreListRow_OnMouseUp", FCONotes_IgnoreListRow_OnMouseUp)
-end
-
---Map the texture path to the texture ID
-local function GetFCOTextureId(texturePath)
-    if texturePath == nil or texturePath == "" then return 0 end
-    for textureId, texturePathString in pairs(textureVars.MARKER_TEXTURES) do
-        if	texturePathString == texturePath then
-            return textureId
-        end
+        --======== PreHook GuildRoster Row OnMouseUp =======================================================================
+        --Pre-Hook the handler "OnMouseUp" event for the rowControl of each guild roster row to
+        --add a context menu entry
+        ZO_PreHook("ZO_KeyboardGuildRosterRow_OnMouseUp", FCONotes_GuildRosterRow_OnMouseUp)
     end
-    return 0
+
+
+    if enableNotes[FCONOTES_LIST_TYPE_FRIENDS_LIST] then
+        --======== KEYBOARD FRIENDS LIST ===================================================================================
+        --Register a callback function for the friends list scene
+        FRIENDS_LIST_SCENE:RegisterCallback("StateChange", FCONotes_Friend_Scenes_Callback)
+
+        --Setup function of the friendslist row: Add the new note control
+        SecurePostHook(FRIENDS_LIST, "SetupRow", FCONotes_FriendsList_SetupRow)
+
+        --Pre-Hook the handler "OnMouseUp" event for the rowControl
+        ZO_PreHook("ZO_FriendsListRow_OnMouseUp", FCONotes_FriendsListRow_OnMouseUp)
+    end
+
+
+    if enableNotes[FCONOTES_LIST_TYPE_IGNORE_LIST] then
+        --======== KEYBOARD IGNORE LIST ====================================================================================
+        --Register a callback function for the ignore list scene
+        IGNORE_LIST_SCENE:RegisterCallback("StateChange", FCONotes_Ignore_Scenes_Callback)
+
+        --Setup function of the friendslist row: Add the new note control
+        SecurePostHook(IGNORE_LIST, "SetupIgnoreEntry", FCONotes_IgnoreList_SetupRow)
+
+        --Pre-Hook the handler "OnMouseUp" event for the rowControl
+        ZO_PreHook("ZO_IgnoreListRow_OnMouseUp", FCONotes_IgnoreListRow_OnMouseUp)
+    end
 end
 
 local function buildTextureIdsList()
@@ -1422,6 +1284,7 @@ local function BuildAddonMenu()
             end,
             default = defaults.enableNotes[FCONOTES_LIST_TYPE_GUILDS_ROSTER],
             width="full",
+            requiresReload = true,
         },
 
         {
@@ -1431,8 +1294,9 @@ local function BuildAddonMenu()
             getFunc = function() return settings.showAlwaysGuildRoster end,
             setFunc = function(value) settings.showAlwaysGuildRoster = value
             end,
-            default = settings.showAlwaysGuildRoster,
+            default = defaults.showAlwaysGuildRoster,
             width="full",
+            disabled = function() return not settings.enableNotes[FCONOTES_LIST_TYPE_GUILDS_ROSTER] end
         },
 
         {
@@ -1445,8 +1309,9 @@ local function BuildAddonMenu()
                 local activeGuildId = GUILD_ROSTER_MANAGER:GetGuildId()
                 FCONotes_GetListData(FCONOTES_LIST_TYPE_GUILDS_ROSTER, -1, true, { guildId = activeGuildId })
             end,
-            default = settings.saveGuildPersonalNotesAccountWide,
+            default = defaults.saveGuildPersonalNotesAccountWide,
             width="full",
+            disabled = function() return not settings.enableNotes[FCONOTES_LIST_TYPE_GUILDS_ROSTER] end
         },
 
         {
@@ -1459,7 +1324,8 @@ local function BuildAddonMenu()
                 FCONotes_Settings_NoteGuildIconPreview:SetColor(ZO_ColorDef:New(r,g,b,a))
             end,
             width="half",
-            default = settings.icon[FCONOTES_LIST_TYPE_GUILDS_ROSTER].color,
+            default = defaults.icon[FCONOTES_LIST_TYPE_GUILDS_ROSTER].color,
+            disabled = function() return not settings.enableNotes[FCONOTES_LIST_TYPE_GUILDS_ROSTER] end
         },
         {
             type = "iconpicker",
@@ -1478,8 +1344,9 @@ local function BuildAddonMenu()
             visibleRows = 5,
             iconSize = settings.icon[FCONOTES_LIST_TYPE_GUILDS_ROSTER].size,
             width = "half",
-            default = textureVars.MARKER_TEXTURES[settings.icon[FCONOTES_LIST_TYPE_GUILDS_ROSTER].texture],
-            reference = "FCONotes_Settings_NoteGuildIconPreview"
+            default = textureVars.MARKER_TEXTURES[defaults.icon[FCONOTES_LIST_TYPE_GUILDS_ROSTER].texture],
+            reference = "FCONotes_Settings_NoteGuildIconPreview",
+            disabled = function() return not settings.enableNotes[FCONOTES_LIST_TYPE_GUILDS_ROSTER] end
         },
         {
             type = "slider",
@@ -1493,7 +1360,8 @@ local function BuildAddonMenu()
                 --Preview1:SetDimensions(size, size)
             end,
             width="half",
-            default = settings.icon[FCONOTES_LIST_TYPE_GUILDS_ROSTER].size,
+            default = defaults.icon[FCONOTES_LIST_TYPE_GUILDS_ROSTER].size,
+            disabled = function() return not settings.enableNotes[FCONOTES_LIST_TYPE_GUILDS_ROSTER] end
         },
 
         {
@@ -1506,8 +1374,9 @@ local function BuildAddonMenu()
             setFunc = function(offset)
                 settings.icon[FCONOTES_LIST_TYPE_GUILDS_ROSTER].position.x = offset
             end,
-            default = settings.icon[FCONOTES_LIST_TYPE_GUILDS_ROSTER].position.x,
+            default = defaults.icon[FCONOTES_LIST_TYPE_GUILDS_ROSTER].position.x,
             width="half",
+            disabled = function() return not settings.enableNotes[FCONOTES_LIST_TYPE_GUILDS_ROSTER] end
         },
         {
             type = "slider",
@@ -1519,8 +1388,9 @@ local function BuildAddonMenu()
             setFunc = function(offset)
                 settings.icon[FCONOTES_LIST_TYPE_GUILDS_ROSTER].position.y = offset
             end,
-            default = settings.icon[FCONOTES_LIST_TYPE_GUILDS_ROSTER].position.y,
+            default = defaults.icon[FCONOTES_LIST_TYPE_GUILDS_ROSTER].position.y,
             width="half",
+            disabled = function() return not settings.enableNotes[FCONOTES_LIST_TYPE_GUILDS_ROSTER] end
         },
 
         --==============================================================================================================
@@ -1538,6 +1408,7 @@ local function BuildAddonMenu()
             end,
             default = defaults.enableNotes[FCONOTES_LIST_TYPE_FRIENDS_LIST],
             width="full",
+            requiresReload = true,
         },
 
         {
@@ -1550,7 +1421,8 @@ local function BuildAddonMenu()
                 FCONotes_Settings_NoteFriendsIconPreview:SetColor(ZO_ColorDef:New(r,g,b,a))
             end,
             width="half",
-            default = settings.icon[FCONOTES_LIST_TYPE_FRIENDS_LIST].color,
+            default = defaults.icon[FCONOTES_LIST_TYPE_FRIENDS_LIST].color,
+            disabled = function() return not settings.enableNotes[FCONOTES_LIST_TYPE_FRIENDS_LIST] end
         },
         {
             type = "iconpicker",
@@ -1569,8 +1441,9 @@ local function BuildAddonMenu()
             visibleRows = 5,
             iconSize = settings.icon[FCONOTES_LIST_TYPE_FRIENDS_LIST].size,
             width = "half",
-            default = textureVars.MARKER_TEXTURES[settings.icon[FCONOTES_LIST_TYPE_FRIENDS_LIST].texture],
-            reference = "FCONotes_Settings_NoteFriendsIconPreview"
+            default = textureVars.MARKER_TEXTURES[defaults.icon[FCONOTES_LIST_TYPE_FRIENDS_LIST].texture],
+            reference = "FCONotes_Settings_NoteFriendsIconPreview",
+            disabled = function() return not settings.enableNotes[FCONOTES_LIST_TYPE_FRIENDS_LIST] end
         },
         {
             type = "slider",
@@ -1584,7 +1457,8 @@ local function BuildAddonMenu()
                 --Preview1:SetDimensions(size, size)
             end,
             width="half",
-            default = settings.icon[FCONOTES_LIST_TYPE_FRIENDS_LIST].size,
+            default = defaults.icon[FCONOTES_LIST_TYPE_FRIENDS_LIST].size,
+            disabled = function() return not settings.enableNotes[FCONOTES_LIST_TYPE_FRIENDS_LIST] end
         },
 
         {
@@ -1597,8 +1471,9 @@ local function BuildAddonMenu()
             setFunc = function(offset)
                 settings.icon[FCONOTES_LIST_TYPE_FRIENDS_LIST].position.x = offset
             end,
-            default = settings.icon[FCONOTES_LIST_TYPE_FRIENDS_LIST].position.x,
+            default = defaults.icon[FCONOTES_LIST_TYPE_FRIENDS_LIST].position.x,
             width="half",
+            disabled = function() return not settings.enableNotes[FCONOTES_LIST_TYPE_FRIENDS_LIST] end
         },
         {
             type = "slider",
@@ -1610,8 +1485,9 @@ local function BuildAddonMenu()
             setFunc = function(offset)
                 settings.icon[FCONOTES_LIST_TYPE_FRIENDS_LIST].position.y = offset
             end,
-            default = settings.icon[FCONOTES_LIST_TYPE_FRIENDS_LIST].position.y,
+            default = defaults.icon[FCONOTES_LIST_TYPE_FRIENDS_LIST].position.y,
             width="half",
+            disabled = function() return not settings.enableNotes[FCONOTES_LIST_TYPE_FRIENDS_LIST] end
         },
 
         --==============================================================================================================
@@ -1629,6 +1505,7 @@ local function BuildAddonMenu()
             end,
             default = defaults.enableNotes[FCONOTES_LIST_TYPE_IGNORE_LIST],
             width="full",
+            requiresReload = true,
         },
 
         {
@@ -1641,7 +1518,8 @@ local function BuildAddonMenu()
                 FCONotes_Settings_NoteIgnoreIconPreview:SetColor(ZO_ColorDef:New(r,g,b,a))
             end,
             width="half",
-            default = settings.icon[FCONOTES_LIST_TYPE_IGNORE_LIST].color,
+            default = defaults.icon[FCONOTES_LIST_TYPE_IGNORE_LIST].color,
+            disabled = function() return not settings.enableNotes[FCONOTES_LIST_TYPE_IGNORE_LIST] end
         },
         {
             type = "iconpicker",
@@ -1660,8 +1538,9 @@ local function BuildAddonMenu()
             visibleRows = 5,
             iconSize = settings.icon[FCONOTES_LIST_TYPE_IGNORE_LIST].size,
             width = "half",
-            default = textureVars.MARKER_TEXTURES[settings.icon[FCONOTES_LIST_TYPE_IGNORE_LIST].texture],
-            reference = "FCONotes_Settings_NoteIgnoreIconPreview"
+            default = textureVars.MARKER_TEXTURES[defaults.icon[FCONOTES_LIST_TYPE_IGNORE_LIST].texture],
+            reference = "FCONotes_Settings_NoteIgnoreIconPreview",
+            disabled = function() return not settings.enableNotes[FCONOTES_LIST_TYPE_IGNORE_LIST] end
         },
         {
             type = "slider",
@@ -1675,7 +1554,8 @@ local function BuildAddonMenu()
                 --Preview1:SetDimensions(size, size)
             end,
             width="half",
-            default = settings.icon[FCONOTES_LIST_TYPE_IGNORE_LIST].size,
+            default = defaults.icon[FCONOTES_LIST_TYPE_IGNORE_LIST].size,
+            disabled = function() return not settings.enableNotes[FCONOTES_LIST_TYPE_IGNORE_LIST] end
         },
 
         {
@@ -1688,8 +1568,9 @@ local function BuildAddonMenu()
             setFunc = function(offset)
                 settings.icon[FCONOTES_LIST_TYPE_IGNORE_LIST].position.x = offset
             end,
-            default = settings.icon[FCONOTES_LIST_TYPE_IGNORE_LIST].position.x,
+            default = defaults.icon[FCONOTES_LIST_TYPE_IGNORE_LIST].position.x,
             width="half",
+            disabled = function() return not settings.enableNotes[FCONOTES_LIST_TYPE_IGNORE_LIST] end
         },
         {
             type = "slider",
@@ -1701,8 +1582,9 @@ local function BuildAddonMenu()
             setFunc = function(offset)
                 settings.icon[FCONOTES_LIST_TYPE_IGNORE_LIST].position.y = offset
             end,
-            default = settings.icon[FCONOTES_LIST_TYPE_IGNORE_LIST].position.y,
+            default = defaults.icon[FCONOTES_LIST_TYPE_IGNORE_LIST].position.y,
             width="half",
+            disabled = function() return not settings.enableNotes[FCONOTES_LIST_TYPE_IGNORE_LIST] end
         },
 	}
 	FCON.LAM:RegisterOptionControls(addonName .. "_LAM", optionsTable)
@@ -1882,14 +1764,12 @@ function FCON.SetGuildMemberNote(guildId, displayName, guildMemberNoteText, useD
     local retVar = false
 
     --Update the SavedVariables
-    local function updateFCONotesSavedVariables(p_guildId, p_displayName, p_noteText)
-        LoadSavedVariables()
-        retVar = setPersonalNoteToSV(FCONOTES_LIST_TYPE_GUILDS_ROSTER, p_noteText, p_displayName, { guildId = p_guildId })
-    end
+    LoadSavedVariables()
+    if not FCON.settingsVars.settings.enableNotes[FCONOTES_LIST_TYPE_GUILDS_ROSTER] then return false end
 
     --Callback function for the notes dialog "Accept" button
     local standardCallBackFunc = function(p_displayName, p_noteText)
-        updateFCONotesSavedVariables(guildId, p_displayName, p_noteText)
+        retVar = setPersonalNoteToSV(FCONOTES_LIST_TYPE_GUILDS_ROSTER, p_noteText, p_displayName, { guildId = guildId })
     end
     if not callbackChangedFunc or type(callbackChangedFunc) ~= "function" then
         callbackChangedFunc =  standardCallBackFunc
@@ -1897,7 +1777,7 @@ function FCON.SetGuildMemberNote(guildId, displayName, guildMemberNoteText, useD
 
     --Do not show a dialog to input the memberNote?
     if not useDialog then
-       updateFCONotesSavedVariables(guildId, displayName, guildMemberNoteText)
+       standardCallBackFunc(guildId, displayName, guildMemberNoteText)
     else
     --Show a dialog to input the memberNote
         ZO_Dialogs_ShowDialog("EDIT_NOTE", {displayName = displayName, note = guildMemberNoteText, changedCallback = callbackChangedFunc})
