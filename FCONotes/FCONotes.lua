@@ -796,7 +796,7 @@ function FCONotes_AddNote(ctrl, fromKeybind, delete, noteType)
                 --Saved personal ignore list notes
                 if settings.personalIgnoreListNotes[data.displayName] ~= nil then
                     --Backup this note so you can restore it with next ReloadUI
-                    FCONotes_BackupPersonalNotesNow(listType, data.displayName)
+                    FCONotes_BackupPersonalNotesNow(noteType, data.displayName)
                     --Delete the personal guild member note now
                     settings.personalIgnoreListNotes[data.displayName] = nil
                 end
@@ -840,7 +840,6 @@ local function FCONotes_AddContextMenuEntry(ctrl, noteType)
     local data = ZO_ScrollList_GetData(ctrl)
     if data ~= nil then
         local locVars = localizationVars.fco_notes_loc
-        if data.FCOnote == nil then data.FCOnote = "" end
         --Call this function later as the original menu will be build in OnMouseUp function and we are in the PreHook of this function here!
         --So all menu entries will be overwritten again and we must add this entry later
         zo_callLater(function()
@@ -852,7 +851,7 @@ local function FCONotes_AddContextMenuEntry(ctrl, noteType)
                     FCONotes_AddNote(ctrl, false, false, noteType)
             end)
             --Add a remove context menu too?
-            if data.FCOnote ~= "" then
+            if data.FCOnote ~= nil and data.FCOnote ~= "" then
                 --AddMenuItem(localizationVars.fco_notes_loc["context_menu_remove_personal_guild_note"],
                 AddCustomMenuItem(locVars["context_menu_remove_personal_guild_note"],
                     function()
@@ -860,6 +859,7 @@ local function FCONotes_AddContextMenuEntry(ctrl, noteType)
                         FCONotes_AddNote(ctrl, false, true, noteType)
                 end)
 
+                --Add a "Send to officer chat" context menu for guild messages
                 if noteType == FCONOTES_LIST_TYPE_GUILDS_ROSTER then
                     if DoesPlayerHaveGuildPermission(GUILD_ROSTER_MANAGER:GetGuildId(), GUILD_PERMISSION_OFFICER_CHAT_WRITE) then
                         --AddMenuItem(localizationVars.fco_notes_loc["context_menu_send_personal_guild_note_to_officer_chat"],
