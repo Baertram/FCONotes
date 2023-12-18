@@ -1157,7 +1157,7 @@ local function buildTextureIdsList()
     FCON.textureVars.MARKER_TEXTURES_IDS = {}
     local MARKER_TEXTURES_IDS = FCON.textureVars.MARKER_TEXTURES_IDS
     for k, _ in ipairs(textureVars.MARKER_TEXTURES) do
-        MARKER_TEXTURES_IDS[k] = k
+        MARKER_TEXTURES_IDS[k] = tos(k)
     end
     return MARKER_TEXTURES_IDS
 end
