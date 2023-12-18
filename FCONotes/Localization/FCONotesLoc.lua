@@ -140,7 +140,7 @@ FCONotes.fco_notesloc = {
         ["chatcommands_help"]					 = "'help' / 'list': Zeige diese Informationen über das Addon",
         ["chatcommands_backup"]			         = "'backup': Speichert all aktuellen persönlichen Notizen für ein Backup ab.\n'backupguilds': Speichert die aktuellen persönlichen Gildenmitglieder Notizen für ein Backup ab.\n'backupfriends': Speichert die aktuellen persönlichen Freundesliste Notizen für ein Backup ab.\n'backupignore': Speichert die aktuellen persönlichen Ignorierenliste Notizen für ein Backup ab.\n|cFF0000ACHTUNG:|r Es wird die Benutzeroberfläche nach 3 Sekunden neu geladen!",
         ["chatcommands_restore"]			     = "'restore': Stellt alle persönlichen Notizen aus einem Backup wieder her.\n'restoreguilds': Stellt die persönlichen Gildenmitglieder Notizen aus einem Backup wieder her.\n'restorefriends': Stellt die persönlichen Freundesliste Notizen aus einem Backup wieder her.\n'restoreignore': Stellt die persönlichen Ignorierenliste Notizen aus einem Backup wieder her.\n|cFF0000ACHTUNG:|r Es wird die Benutzeroberfläche nach 3 Sekunden neu geladen!",
-        ["chatcommands_backup_feedback_true"]    = "|c00FF00FCO|r|cFFFF00Notes|r - Backup wurde erstellt",
+        ["chatcommands_backup_feedback_true"]    = "|c00FF00FCO|r|cFFFF00Notes|r - Backup wurde erstellt - Benutzeroberfläche lädt neu in 3 Sekunden",
         ["chatcommands_backup_feedback_false"]   = "|cFF0000FCO|r|cFFFF00Notes|r - Backup konnte nicht erstellt werden!",
         --Context menu
         ["context_menu_add_personal_guild_note"] = "|c22DD22FCO Notes|r Ändere persönliche Notiz",
