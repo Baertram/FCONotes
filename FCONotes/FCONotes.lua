@@ -62,6 +62,61 @@ local function getGuildIndexById(guildId)
     return
 end
 
+local function setPersonalNoteToSV(noteType, noteText, displayName, updateData)
+    if noteType == nil then return false end
+    local settings = FCON.settingsVars.settings
+    if noteText == "" then noteText = nil end
+    local wasChanged = false
+
+    if noteType == FCONOTES_LIST_TYPE_GUILDS_ROSTER then
+        local activeGuildId = updateData ~= nil and updateData.guildId
+        if activeGuildId == nil then activeGuildId = GUILD_ROSTER_MANAGER:GetGuildId() end
+        if activeGuildId == nil or activeGuildId <= 0 then return false end
+
+        if not settings.saveGuildPersonalNotesAccountWide then
+            settings.personalGuildNotes[activeGuildId] = settings.personalGuildNotes[activeGuildId] or {}
+            settings.personalGuildNotes[activeGuildId][displayName] = noteText
+            wasChanged = true
+        else
+            settings.personalGuildNotes[displayName] = noteText
+            wasChanged = true
+        end
+
+    elseif noteType == FCONOTES_LIST_TYPE_FRIENDS_LIST then
+        settings.personalFriendsListNotes[displayName] = noteText
+        wasChanged = true
+    elseif noteType == FCONOTES_LIST_TYPE_IGNORE_LIST then
+        settings.personalIgnoreListNotes[displayName]  = noteText
+        wasChanged = true
+    end
+    return wasChanged
+end
+
+local function getPersonalNoteFromSV(noteType, displayName, readData)
+    if noteType == nil then return end
+    local settings = FCON.settingsVars.settings
+
+    if noteType == FCONOTES_LIST_TYPE_GUILDS_ROSTER then
+        local activeGuildId = readData ~= nil and readData.guildId
+        if activeGuildId == nil then activeGuildId = GUILD_ROSTER_MANAGER:GetGuildId() end
+        if activeGuildId == nil or activeGuildId <= 0 then return end
+
+        if not settings.saveGuildPersonalNotesAccountWide then
+            if settings.personalGuildNotes[activeGuildId] == nil then return end
+            return settings.personalGuildNotes[activeGuildId][displayName]
+        else
+            return settings.personalGuildNotes[displayName]
+        end
+
+    elseif noteType == FCONOTES_LIST_TYPE_FRIENDS_LIST then
+        return settings.personalFriendsListNotes[displayName]
+    elseif noteType == FCONOTES_LIST_TYPE_IGNORE_LIST then
+        return settings.personalIgnoreListNotes[displayName]
+    end
+    return
+end
+
+
 --Function to save the current personal guild member notes for a later backup
 local function FCONotes_BackupPersonalNotesNow(notesType, displayName, data)
     local backupAll = (notesType == nil and displayName == nil and data == nil and true) or false
@@ -144,12 +199,13 @@ local function FCONotes_RestorePersonalFCONotesNow(noteType)
 end
 
 local function FCONotes_UpdateNoteRowIcon(noteType, control, data)
---d("FCONotes_UpdateNoteRowIcon-noteType: " ..tos(noteType))
+d("[FCONotes_UpdateNoteRowIcon]-noteType: " ..tos(noteType))
     if noteType == nil then return false end
     if control == nil then return end
     local settings = FCON.settingsVars.settings
 
     if noteType == FCONOTES_LIST_TYPE_GUILDS_ROSTER then
+--FCON._debugDataUpdateNoteRowIcon = data
         local standardESOGuildMemberNote = control:GetNamedChild("Note")
         if standardESOGuildMemberNote ~= nil then
             local personalGuildMemberNote = control:GetNamedChild("FCONote")
@@ -166,12 +222,18 @@ local function FCONotes_UpdateNoteRowIcon(noteType, control, data)
             if personalGuildMemberNote ~= nil and iconTexture ~= nil then
                 local doHide = false
                 local noteText = ""
-                local dataTab = data or control.dataEntry.data
+                --This will only use the data at the current row, not the updated data from SavedVariables -> Directly after a change by the editor dialog
+                local dataTab = data
+                if dataTab == nil then
+                    dataTab = control.dataEntry.data
+                    dataTab.FCOnote = getPersonalNoteFromSV(noteType, dataTab.displayName, { guildId = dataTab.guildId or GUILD_ROSTER_MANAGER:GetGuildId() })
+                end
                 if dataTab.FCOnote == nil or dataTab.FCOnote == "" then
                     doHide = true
                 elseif dataTab.FCOnote ~= nil then
                     noteText = dataTab.FCOnote
                 end
+--d(">found FCO icon texture control, text: " ..tos(noteText))
                 local pLeft, pTop
                 local pWidth, pHeight
                 local pTexture = textureVars.MARKER_TEXTURES[iconTexture]
@@ -242,8 +304,11 @@ local function FCONotes_UpdateNoteRowIcon(noteType, control, data)
             if personalFriendsListNote ~= nil and iconTexture ~= nil then
                 local doHide = false
                 local noteText = ""
-                local dataTab = data or control.dataEntry.data
-
+                local dataTab = data
+                if dataTab == nil then
+                    dataTab = control.dataEntry.data
+                    dataTab.FCOnote = getPersonalNoteFromSV(noteType, dataTab.displayName, nil)
+                end
 --d(">displayName: " .. tos(dataTab.displayName))
                 if dataTab.FCOnote == nil or dataTab.FCOnote == "" then
                     doHide = true
@@ -319,7 +384,11 @@ local function FCONotes_UpdateNoteRowIcon(noteType, control, data)
             if personalIgnoreListNote ~= nil and iconTexture ~= nil then
                 local doHide = false
                 local noteText = ""
-                local dataTab = data or control.dataEntry.data
+                local dataTab = data
+                if dataTab == nil then
+                    dataTab = control.dataEntry.data
+                    dataTab.FCOnote = getPersonalNoteFromSV(noteType, dataTab.displayName, nil)
+                end
                 if dataTab.FCOnote == nil or dataTab.FCOnote == "" then
                     doHide = true
                 elseif dataTab.FCOnote ~= nil then
@@ -471,6 +540,7 @@ local function FCONotes_GetListData(noteType, displayName, updateNoteFromSavedVa
             end
         end
         ]]
+d("<refresh scroll list GUILD ROSTER")
         ZO_ScrollList_RefreshVisible(guildRosterList.list or guildRosterList)
         return true
 
@@ -564,84 +634,69 @@ local function FCONotes_GetListData(noteType, displayName, updateNoteFromSavedVa
     return false
 end
 
+
 --Function to save the guild member FCO note now
 local function FCONotes_SetFCONote(noteType, displayName, note, data)
+d("[FCONotes_SetFCONote]noteType: " ..tos(noteType) .. ", displayName: " ..tos(displayName) .. ", note: " ..tos(note))
     if displayName == nil or displayName == "" then return false end
     if note == nil then return false end
     --The note was removed/cleared?
     local noteText = note
 
-    local settings = FCON.settingsVars.settings
+
 
     if noteType == FCONOTES_LIST_TYPE_GUILDS_ROSTER then
         local activeGuildId = data.guildId
-        --d("FCONotes_SetGuildMemberFCONote - displayName: " .. displayName)
         if activeGuildId == nil then activeGuildId = GUILD_ROSTER_MANAGER:GetGuildId() end
         if activeGuildId == nil or activeGuildId <= 0 then return false end
+d(">guildId: " .. activeGuildId)
+        local activeGuildIdData = { guildId = activeGuildId }
 
-        --Update the saved variables table with hte new note
-        if not settings.saveGuildPersonalNotesAccountWide then
-            if settings.personalGuildNotes[activeGuildId] == nil then
-                settings.personalGuildNotes[activeGuildId] = {}
+        local wasChanged = setPersonalNoteToSV(noteType, noteText, displayName, activeGuildIdData)
+        if wasChanged then
+            --Update the data structures for the current guild member
+            if FCONotes_GetListData(noteType, displayName, true, activeGuildIdData) == false then
+d("<abort!")
+                return false
+            else
+                --Update this one, changed icon at the guild roster now
+                if guildRosterVars.lastRowControl ~= nil then
+d("SetGuildMemberFCONote - Update icon at row: " .. guildRosterVars.lastRowControl:GetName())
+                    FCONotes_UpdateNoteRowIcon(noteType, guildRosterVars.lastRowControl, nil)
+                end
             end
-            if settings.personalGuildNotes[activeGuildId][displayName] == nil then
-                settings.personalGuildNotes[activeGuildId][displayName] = ""
-            end
-            settings.personalGuildNotes[activeGuildId][displayName] = noteText
-        else
-            if settings.personalGuildNotes[displayName] == nil then
-                settings.personalGuildNotes[displayName] = ""
-            end
-            settings.personalGuildNotes[displayName] = noteText
-            --d("SavedVars: " .. settings.personalGuildNotes[displayName])
-        end
 
-        --Update the data structures for the current guild member
-        if FCONotes_GetListData(noteType, displayName, true, { guildId = activeGuildId }) == false then
-            --d("<abort!")
-            return false
-        else
-            --Update this one, changed icon at the guild roster now
-            if guildRosterVars.lastRowControl ~= nil then
-                --d("SetGuildMemberFCONote - Update icon at row: " .. guildRosterVars.lastRowControl:GetName())
-                FCONotes_UpdateNoteRowIcon(noteType, guildRosterVars.lastRowControl, nil)
-            end
         end
-        return true
+        return wasChanged
 
     elseif noteType == FCONOTES_LIST_TYPE_FRIENDS_LIST then
-        if settings.personalFriendsListNotes[displayName] == nil then
-            settings.personalFriendsListNotes[displayName] = ""
-        end
-        settings.personalFriendsListNotes[displayName] = noteText
-
-        if FCONotes_GetListData(noteType, displayName, true) == false then
-            return false
-        else
-            --Update this one, changed icon at the guild roster now
-            if friendsListVars.lastRowControl ~= nil then
-                FCONotes_UpdateNoteRowIcon(noteType, friendsListVars.lastRowControl, nil)
+        local wasChanged = setPersonalNoteToSV(noteType, noteText, displayName, nil)
+        if wasChanged then
+            if FCONotes_GetListData(noteType, displayName, true) == false then
+                return false
+            else
+                --Update this one, changed icon at the guild roster now
+                if friendsListVars.lastRowControl ~= nil then
+                    FCONotes_UpdateNoteRowIcon(noteType, friendsListVars.lastRowControl, nil)
+                end
             end
         end
-        return true
+        return wasChanged
 
     elseif noteType == FCONOTES_LIST_TYPE_IGNORE_LIST then
-        if settings.personalIgnoreListNotes[displayName] == nil then
-            settings.personalIgnoreListNotes[displayName] = ""
-        end
-        settings.personalIgnoreListNotes[displayName] = noteText
-
-        if FCONotes_GetListData(noteType, displayName, true) == false then
-            return false
-        else
-            --Update this one, changed icon at the guild roster now
-            if ignoreListVars.lastRowControl ~= nil then
-                FCONotes_UpdateNoteRowIcon(noteType, ignoreListVars.lastRowControl, nil)
+        local wasChanged = setPersonalNoteToSV(noteType, noteText, displayName, nil)
+        if wasChanged then
+            if FCONotes_GetListData(noteType, displayName, true) == false then
+                return false
+            else
+                --Update this one, changed icon at the guild roster now
+                if ignoreListVars.lastRowControl ~= nil then
+                    FCONotes_UpdateNoteRowIcon(noteType, ignoreListVars.lastRowControl, nil)
+                end
             end
         end
-        return true
+        return wasChanged
     end
-
     return
 end
 
@@ -1824,17 +1879,8 @@ function FCON.SetGuildMemberNote(guildId, displayName, guildMemberNoteText, useD
 
     --Update the SavedVariables
     local function updateFCONotesSavedVariables(p_guildId, p_displayName, p_noteText)
-        if not p_noteText then p_noteText = "" end
         LoadSavedVariables()
-        local settings = FCON.settingsVars.settings
-        if not settings or not settings.personalGuildNotes then return false end
-        if not settings.saveGuildPersonalNotesAccountWide then
-            settings.personalGuildNotes[p_guildId] = settings.personalGuildNotes[p_guildId] or {}
-            settings.personalGuildNotes[p_guildId][p_displayName] = p_noteText
-        else
-            settings.personalGuildNotes[p_displayName] = p_noteText
-        end
-        retVar = true
+        retVar = setPersonalNoteToSV(FCONOTES_LIST_TYPE_GUILDS_ROSTER, p_noteText, p_displayName, { guildId = p_guildId })
     end
 
     --Callback function for the notes dialog "Accept" button
@@ -1866,17 +1912,20 @@ end
 --String displayName                    The @accountName
 --returns String noteText
 function FCON.GetGuildMemberNote(guildId, displayName)
-    local guildMemberNote
     LoadSavedVariables()
-    local settings = FCON.settingsVars.settings
-    if not settings or not settings.personalGuildNotes then return end
-    if not settings.saveGuildPersonalNotesAccountWide then
-        guildMemberNote = settings.personalGuildNotes[guildId] and settings.personalGuildNotes[guildId][displayName]
-    else
-        guildMemberNote = settings.personalGuildNotes[displayName]
-    end
-    return guildMemberNote
+    return getPersonalNoteFromSV(FCONOTES_LIST_TYPE_GUILDS_ROSTER, displayName, { guildId = guildId }) or ""
 end
+
+function FCON.GetFriendsListNote(displayName)
+    LoadSavedVariables()
+    return getPersonalNoteFromSV(FCONOTES_LIST_TYPE_FRIENDS_LIST, displayName, nil) or ""
+end
+
+function FCON.GetIgnoreListNote(displayName)
+    LoadSavedVariables()
+    return getPersonalNoteFromSV(FCONOTES_LIST_TYPE_IGNORE_LIST, displayName, nil) or ""
+end
+
 
 --========== Initialize the addon FUNCTIONS ==================================================
 -- Call the start function for this addon
