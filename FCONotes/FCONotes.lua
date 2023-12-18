@@ -199,7 +199,7 @@ local function FCONotes_RestorePersonalFCONotesNow(noteType)
 end
 
 local function FCONotes_UpdateNoteRowIcon(noteType, control, data)
-d("[FCONotes_UpdateNoteRowIcon]-noteType: " ..tos(noteType))
+--d("[FCONotes_UpdateNoteRowIcon]-noteType: " ..tos(noteType))
     if noteType == nil then return false end
     if control == nil then return end
     local settings = FCON.settingsVars.settings
@@ -540,7 +540,7 @@ local function FCONotes_GetListData(noteType, displayName, updateNoteFromSavedVa
             end
         end
         ]]
-d("<refresh scroll list GUILD ROSTER")
+--d("<refresh scroll list GUILD ROSTER")
         ZO_ScrollList_RefreshVisible(guildRosterList.list or guildRosterList)
         return true
 
@@ -637,7 +637,7 @@ end
 
 --Function to save the guild member FCO note now
 local function FCONotes_SetFCONote(noteType, displayName, note, data)
-d("[FCONotes_SetFCONote]noteType: " ..tos(noteType) .. ", displayName: " ..tos(displayName) .. ", note: " ..tos(note))
+--d("[FCONotes_SetFCONote]noteType: " ..tos(noteType) .. ", displayName: " ..tos(displayName) .. ", note: " ..tos(note))
     if displayName == nil or displayName == "" then return false end
     if note == nil then return false end
     --The note was removed/cleared?
@@ -649,19 +649,19 @@ d("[FCONotes_SetFCONote]noteType: " ..tos(noteType) .. ", displayName: " ..tos(d
         local activeGuildId = data.guildId
         if activeGuildId == nil then activeGuildId = GUILD_ROSTER_MANAGER:GetGuildId() end
         if activeGuildId == nil or activeGuildId <= 0 then return false end
-d(">guildId: " .. activeGuildId)
+--d(">guildId: " .. activeGuildId)
         local activeGuildIdData = { guildId = activeGuildId }
 
         local wasChanged = setPersonalNoteToSV(noteType, noteText, displayName, activeGuildIdData)
         if wasChanged then
             --Update the data structures for the current guild member
             if FCONotes_GetListData(noteType, displayName, true, activeGuildIdData) == false then
-d("<abort!")
+--d("<abort!")
                 return false
             else
                 --Update this one, changed icon at the guild roster now
                 if guildRosterVars.lastRowControl ~= nil then
-d("SetGuildMemberFCONote - Update icon at row: " .. guildRosterVars.lastRowControl:GetName())
+--d("SetGuildMemberFCONote - Update icon at row: " .. guildRosterVars.lastRowControl:GetName())
                     FCONotes_UpdateNoteRowIcon(noteType, guildRosterVars.lastRowControl, nil)
                 end
             end
