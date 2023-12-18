@@ -123,11 +123,11 @@ end
 
 
 --Function to save the current personal guild member notes for a later backup
-local function FCONotes_BackupPersonalNotesNow(notesType, displayName, data)
-    local backupAll = (notesType == nil and displayName == nil and data == nil and true) or false
+local function FCONotes_BackupPersonalNotesNow(noteType, displayName, data)
+    local backupAll = (noteType == nil and displayName == nil and data == nil and true) or false
     local somethingBackuped = false
     local settings = FCON.settingsVars.settings
-    if backupAll or notesType == FCONOTES_LIST_TYPE_GUILDS_ROSTER then
+    if backupAll or noteType == FCONOTES_LIST_TYPE_GUILDS_ROSTER then
         --Add only 1 new entry to the backup?
         if displayName ~= nil and displayName ~= "" then
             --Saved for each account name or guild Id + account name?
@@ -153,7 +153,7 @@ local function FCONotes_BackupPersonalNotesNow(notesType, displayName, data)
             somethingBackuped = true
         end
     end
-    if backupAll or  notesType == FCONOTES_LIST_TYPE_FRIENDS_LIST then
+    if backupAll or  noteType == FCONOTES_LIST_TYPE_FRIENDS_LIST then
         if displayName ~= nil and displayName ~= "" then
             local noteTable = settings.personalFriendsListNotes[displayName]
             settings.personalFriendsListNotesBackup[displayName] = noteTable
@@ -165,7 +165,7 @@ local function FCONotes_BackupPersonalNotesNow(notesType, displayName, data)
             somethingBackuped = true
         end
     end
-    if backupAll or  notesType == FCONOTES_LIST_TYPE_IGNORE_LIST then
+    if backupAll or  noteType == FCONOTES_LIST_TYPE_IGNORE_LIST then
         if displayName ~= nil and displayName ~= "" then
             local noteTable = settings.personalIgnoreListNotes[displayName]
             settings.personalIgnoreListNotesBackup[displayName] = noteTable
@@ -183,23 +183,30 @@ end
 --Function to restore the last saved backup of the personal guild member notes
 local function FCONotes_RestorePersonalFCONotesNow(noteType)
     local settings = FCON.settingsVars.settings
-    if noteType == FCONOTES_LIST_TYPE_GUILDS_ROSTER then
+    local restoreAll = (noteType == nil and true) or false
+    local somethingRestored = false
+
+    if restoreAll or noteType == FCONOTES_LIST_TYPE_GUILDS_ROSTER then
         if settings.personalGuildNotesBackup ~= nil then
             ZO_ShallowTableCopy(settings.personalGuildNotesBackup, settings.personalGuildNotes)
-            --Reloading the UI now to saved variables back to the file
-            ReloadUI()
+            somethingRestored = true
         end
-    elseif noteType == FCONOTES_LIST_TYPE_FRIENDS_LIST then
+    end
+    if restoreAll or noteType == FCONOTES_LIST_TYPE_FRIENDS_LIST then
         if settings.personalFriendsListNotesBackup ~= nil then
             ZO_ShallowTableCopy(settings.personalFriendsListNotesBackup, settings.personalFriendsListNotes)
-            --Reloading the UI now to saved variables back to the file
-            ReloadUI()
+            somethingRestored = true
         end
-    elseif noteType == FCONOTES_LIST_TYPE_IGNORE_LIST then
+    end
+    if restoreAll or noteType == FCONOTES_LIST_TYPE_IGNORE_LIST then
         if settings.personalIgnoreListNotesBackup ~= nil then
             ZO_ShallowTableCopy(settings.personalIgnoreListNotesBackup, settings.personalIgnoreListNotes)
-            ReloadUI()
+            somethingRestored = true
         end
+    end
+    --Reloading the UI now to saved variables back to the file
+    if somethingRestored then
+        ReloadUI()
     end
 end
 
@@ -870,17 +877,31 @@ local function help()
     d(localizationVars.fco_notes_loc["chatcommands_restore"])
 end
 
+local function backupSlashCommand(noteType)
+    local feedback = FCONotes_BackupPersonalNotesNow(noteType, nil, nil)
+    d(localizationVars.fco_notes_loc["chatcommands_backup_feedback_" .. tostring(feedback)])
+    if feedback then
+        zo_callLater(function() ReloadUI() end, 3000)
+    end
+end
+
 --chat command handlers
 local function command_handler(arg)
     arg = string.lower(arg)
 	if(arg == "help" or arg == "list" or arg == "") then
        	help()
+    --Backup
 	elseif(arg == "backup") then
-       	local feedback = FCONotes_BackupPersonalNotesNow()
-        d(localizationVars.fco_notes_loc["chatcommands_backup_feedback_" .. tostring(feedback)])
-        if feedback then
-            zo_callLater(function() ReloadUI() end, 3000)
-        end
+        backupSlashCommand(nil)
+    elseif(arg == "backupguild") then
+        backupSlashCommand(FCONOTES_LIST_TYPE_GUILDS_ROSTER)
+    elseif(arg == "backupfriends") then
+        backupSlashCommand(FCONOTES_LIST_TYPE_FRIENDS_LIST)
+    elseif(arg == "backupignore") then
+        backupSlashCommand(FCONOTES_LIST_TYPE_IGNORE_LIST)
+    --Restore
+    elseif(arg == "restore") then
+        FCONotes_RestorePersonalFCONotesNow()
     elseif(arg == "restoreguild") then
         FCONotes_RestorePersonalFCONotesNow(FCONOTES_LIST_TYPE_GUILDS_ROSTER)
     elseif(arg == "restorefriends") then
@@ -1223,9 +1244,9 @@ local function BuildAddonMenu()
             FCONotes_Settings_NoteFriendsIconPreview:SetIconSize(settings.icon[FCONOTES_LIST_TYPE_FRIENDS_LIST].size)
             FCONotes_Settings_NoteFriendsIconPreview.label:SetText(locVars["options_icon2_texture"] .. ": " .. settings.icon[FCONOTES_LIST_TYPE_FRIENDS_LIST].texture)
             --Icon FCONOTES_LIST_TYPE_IGNORE_LIST
-            FCONotes_Settings_NoteIgnoreIconPreview:SetColor(ZO_ColorDef:New(settings.icon[FCONOTES_LIST_TYPE_GUILDS_ROSTER].color))
-            FCONotes_Settings_NoteIgnoreIconPreview:SetIconSize(settings.icon[FCONOTES_LIST_TYPE_GUILDS_ROSTER].size)
-            FCONotes_Settings_NoteIgnoreIconPreview.label:SetText(locVars["options_icon3_texture"] .. ": " .. settings.icon[FCONOTES_LIST_TYPE_GUILDS_ROSTER].texture)
+            FCONotes_Settings_NoteIgnoreIconPreview:SetColor(ZO_ColorDef:New(settings.icon[FCONOTES_LIST_TYPE_IGNORE_LIST].color))
+            FCONotes_Settings_NoteIgnoreIconPreview:SetIconSize(settings.icon[FCONOTES_LIST_TYPE_IGNORE_LIST].size)
+            FCONotes_Settings_NoteIgnoreIconPreview.label:SetText(locVars["options_icon3_texture"] .. ": " .. settings.icon[FCONOTES_LIST_TYPE_IGNORE_LIST].texture)
 
             CALLBACK_MANAGER:UnregisterCallback("LAM-RefreshPanel", CallBackLAMPanelControlsCreated)
         end
@@ -1377,7 +1398,7 @@ local function BuildAddonMenu()
             name = locVars["options_icon1_x"],
             tooltip = locVars["options_icon1_x_TT"],
             min = -15,
-            max = 800,
+            max = 850,
             getFunc = function() return settings.icon[FCONOTES_LIST_TYPE_GUILDS_ROSTER].position.x end,
             setFunc = function(offset)
                 settings.icon[FCONOTES_LIST_TYPE_GUILDS_ROSTER].position.x = offset
@@ -1475,7 +1496,7 @@ local function BuildAddonMenu()
             name = locVars["options_icon1_x"],
             tooltip = locVars["options_icon1_x_TT"],
             min = -15,
-            max = 800,
+            max = 850,
             getFunc = function() return settings.icon[FCONOTES_LIST_TYPE_FRIENDS_LIST].position.x end,
             setFunc = function(offset)
                 settings.icon[FCONOTES_LIST_TYPE_FRIENDS_LIST].position.x = offset
@@ -1573,7 +1594,7 @@ local function BuildAddonMenu()
             name = locVars["options_icon1_x"],
             tooltip = locVars["options_icon1_x_TT"],
             min = -15,
-            max = 800,
+            max = 850,
             getFunc = function() return settings.icon[FCONOTES_LIST_TYPE_IGNORE_LIST].position.x end,
             setFunc = function(offset)
                 settings.icon[FCONOTES_LIST_TYPE_IGNORE_LIST].position.x = offset

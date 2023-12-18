@@ -72,8 +72,8 @@ FCONotes.fco_notesloc = {
         --Chat commands
         ["chatcommands_info"]					 = "|c00FF00FCO|r|cFFFF00Notes|r|cFFFFFF - Change notes about your guild mates & other options|r",
         ["chatcommands_help"]					 = "'help' / 'list': Shows this information about the addon",
-        ["chatcommands_backup"]			         = "'backup': Backup the current saved personal guild member notes.\n|cFF0000ATTENTION:|r Will reload the UI after 3 seconds!",
-        ["chatcommands_restore"]			     = "'restore': Restore the last saved personal guild member notes.\n|cFF0000ATTENTION:|r Will reload the UI!",
+        ["chatcommands_backup"]			         = "'backup': Backup all personal notes.\n'backupguilds': Backup the current saved personal guild member notes.\n'backupfriends': Backup the current saved personal friends list notes.\n'backupignore': Backup the current saved personal ignore list notes.\n|cFF0000ATTENTION:|r Will reload the UI after 3 seconds!",
+        ["chatcommands_restore"]			     = "'restore': Restore all personal notes.\n'restoreguilds': Restore the current saved personal guild member notes.\n'restorefriends': Restore the current saved personal friends list notes.\n'restoreignore': Restore the current saved personal ignore list notes.\n|cFF0000ATTENTION:|r Will reload the UI!",
         ["chatcommands_backup_feedback_true"]    = "|c00FF00FCO|r|cFFFF00Notes|r - Backup has been created - Reloding UI in 3 seconds",
         ["chatcommands_backup_feedback_false"]   = "|cFF0000FCO|r|cFFFF00Notes|r - Backup could not be created!",
         --Context menu
@@ -138,8 +138,8 @@ FCONotes.fco_notesloc = {
         --Chat commands
         ["chatcommands_info"]					 = "|c00FF00FCO|r|cFFFF00Notes|cFFFFFF - Verfasse Hinweis Texte zu deinen Gilden Mitgliedern & andere Optionen",
         ["chatcommands_help"]					 = "'help' / 'list': Zeige diese Informationen über das Addon",
-        ["chatcommands_backup"]			         = "'backup': Speichert die aktuellen persönlichen Gildenmitglieder Notizen für ein Backup ab.",
-        ["chatcommands_restore"]			     = "'restore': Stellt die zuletzte für ein Backup gespeicherten persönlichen Gildenmitglieder Notizen wieder her.\n|cFF0000ACHTUNG:|r Es wird die Benutzeroberfläche neu geladen!",
+        ["chatcommands_backup"]			         = "'backup': Speichert all aktuellen persönlichen Notizen für ein Backup ab.\n'backupguilds': Speichert die aktuellen persönlichen Gildenmitglieder Notizen für ein Backup ab.\n'backupfriends': Speichert die aktuellen persönlichen Freundesliste Notizen für ein Backup ab.\n'backupignore': Speichert die aktuellen persönlichen Ignorierenliste Notizen für ein Backup ab.\n|cFF0000ACHTUNG:|r Es wird die Benutzeroberfläche nach 3 Sekunden neu geladen!",
+        ["chatcommands_restore"]			     = "'restore': Stellt alle persönlichen Notizen aus einem Backup wieder her.\n'restoreguilds': Stellt die persönlichen Gildenmitglieder Notizen aus einem Backup wieder her.\n'restorefriends': Stellt die persönlichen Freundesliste Notizen aus einem Backup wieder her.\n'restoreignore': Stellt die persönlichen Ignorierenliste Notizen aus einem Backup wieder her.\n|cFF0000ACHTUNG:|r Es wird die Benutzeroberfläche nach 3 Sekunden neu geladen!",
         ["chatcommands_backup_feedback_true"]    = "|c00FF00FCO|r|cFFFF00Notes|r - Backup wurde erstellt",
         ["chatcommands_backup_feedback_false"]   = "|cFF0000FCO|r|cFFFF00Notes|r - Backup konnte nicht erstellt werden!",
         --Context menu
@@ -178,34 +178,9 @@ FCONotes.fco_notesloc = {
         ["options_icon1_size"]				 	 = "Taille",
         ["options_icon1_size_TT"]			 = "Taille de l'icône pour la note",
 
-        ["options_icon1_x"]                      = "Offset left",
-        ["options_icon1_x_TT"]              = "Offset of the icon from the left border of the recent guild roster member row",
-        ["options_icon1_y"]                      = "Offset top",
-        ["options_icon1_y_TT"]              = "Offset of the icon from the top border of the recent guild roster member row",
-
-        ["options_note_guild_options"]			 = "Personal guild note options",
-        ["options_save_guild_notes_account_wide"] = "Save by account name",
-        ["options_save_guild_notes_account_wide_TT"] = "Save the personal guild note for the account name, and not for each different guild",
-        ["options_header_guild_roster"]         = "Guild roster options",
-        ["options_always_open_guild_roster"]    = "Always open guild roster first",
-        ["options_always_open_guild_roster_TT"] = "Will always open the guild roster at first, instead of the guild home, if you press the keybind or click the menu's icon",
-
-
         --Chat commands
-        ["chatcommands_info"]					 = "|c00FF00FCO|r|cFFFF00Notes|r|cFFFFFF - Change notes about your guild mates & other options|r",
-        ["chatcommands_help"]					 = "'help' / 'list': Shows this information about the addon",
-        ["chatcommands_backup"]			         = "'backup': Backup the current saved personal guild member notes.\n|cFF0000ATTENTION:|r Will reload the UI after 3 seconds!",
-        ["chatcommands_restore"]			     = "'restore': Restore the last saved personal guild member notes.\n|cFF0000ATTENTION:|r Will reload the UI!",
-        ["chatcommands_backup_feedback_true"]    = "|c00FF00FCO|r|cFFFF00Notes|r - Backup has been created - Reloding UI in 3 seconds",
-        ["chatcommands_backup_feedback_false"]   = "|cFF0000FCO|r|cFFFF00Notes|r - Backup could not be created!",
-
         --Context menu
-        ["context_menu_add_personal_guild_note"] = "|c22DD22FCO Notes|r Change personal note",
-        ["context_menu_remove_personal_guild_note"] = "|cDD2222FCO Notes|r Delete personal note",
-        ["context_menu_send_personal_guild_note_to_officer_chat"] = "|c0000DDFCO Notes|r Send to officer chat",
-
         --Keybindings
-		["SI_BINDING_NAME_FCO_NOTES_ADD"]		= "Change note",
 	},
 
 --Spanish / Español
@@ -235,33 +210,9 @@ FCONotes.fco_notesloc = {
         ["options_icon1_size"]				 	 = "Tama\195\177o",
         ["options_icon1_size_TT"]			 = "Tama\195\177o del icono para el nota",
 
-        ["options_icon1_x"]                      = "Offset left",
-        ["options_icon1_x_TT"]              = "Offset of the icon from the left border of the recent guild roster member row",
-        ["options_icon1_y"]                      = "Offset top",
-        ["options_icon1_y_TT"]              = "Offset of the icon from the top border of the recent guild roster member row",
-
-        ["options_note_guild_options"]			 = "Personal guild note options",
-        ["options_save_guild_notes_account_wide"] = "Save by account name",
-        ["options_save_guild_notes_account_wide_TT"] = "Save the personal guild note for the account name, and not for each different guild",
-        ["options_header_guild_roster"]         = "Guild roster options",
-        ["options_always_open_guild_roster"]    = "Always open guild roster first",
-        ["options_always_open_guild_roster_TT"] = "Will always open the guild roster at first, instead of the guild home, if you press the keybind or click the menu's icon",
-
         --Chat commands
-        ["chatcommands_info"]					 = "|c00FF00FCO|r|cFFFF00Notes|r|cFFFFFF - Change notes about your guild mates & other options|r",
-        ["chatcommands_help"]					 = "'help' / 'list': Shows this information about the addon",
-        ["chatcommands_backup"]			         = "'backup': Backup the current saved personal guild member notes.\n|cFF0000ATTENTION:|r Will reload the UI after 3 seconds!",
-        ["chatcommands_restore"]			     = "'restore': Restore the last saved personal guild member notes.\n|cFF0000ATTENTION:|r Will reload the UI!",
-        ["chatcommands_backup_feedback_true"]    = "|c00FF00FCO|r|cFFFF00Notes|r - Backup has been created - Reloding UI in 3 seconds",
-        ["chatcommands_backup_feedback_false"]   = "|cFF0000FCO|r|cFFFF00Notes|r - Backup could not be created!",
-
         --Context menu
-        ["context_menu_add_personal_guild_note"] = "|c22DD22FCO Notes|r Change personal note",
-        ["context_menu_remove_personal_guild_note"] = "|cDD2222FCO Notes|r Delete personal note",
-        ["context_menu_send_personal_guild_note_to_officer_chat"] = "|c0000DDFCO Notes|r Send to officer chat",
-
 		--Keybindings
-		["SI_BINDING_NAME_FCO_NOTES_ADD"]		= "Change note",
 	},
 
     --Italian / Italiano
@@ -299,15 +250,10 @@ FCONotes.fco_notesloc = {
         ["options_save_guild_notes_account_wide_TT"] = "Salvare la nota gilda personale per il nome di account, e non per ogni differente gilda",
         ["options_header_guild_roster"]         = "Guild roster options",
         ["options_always_open_guild_roster"]    = "Always open guild roster first",
-        ["options_always_open_guild_roster_TT"] = "Will always open the guild roster at first, instead of the guild home, if you press the keybind or click the menu's icon",
 
         --Chat commands
         ["chatcommands_info"]					 = "|c00FF00FCO|r|cFFFF00Notes|r|cFFFFFF - Cambia note circa i vostri compagni di gilda & other options|r",
         ["chatcommands_help"]					 = "'help' / 'list': Mostra questa informazioni su l'addon",
-        ["chatcommands_backup"]			         = "'backup': Backup attuali note membro della gilda personali salvati.\n|cFF0000ATTENTION:|r Ricaricherà l'interfaccia utente!",
-        ["chatcommands_restore"]			     = "'restore': Ripristinare l'ultimo salvataggio della Corporazione personale membro notes.\n|cFF0000ATTENTION:|r Ricaricherà l'interfaccia utente!",
-        ["chatcommands_backup_feedback_true"]    = "|c00FF00FCO|r|cFFFF00Notes|r - Backup è stato creato - ReloadUI in 3 secondi!",
-        ["chatcommands_backup_feedback_false"]   = "|cFF0000FCO|r|cFFFF00Notes|r - Backup non può essere creata!",
         --Context menu
         ["context_menu_add_personal_guild_note"] = "|c22DD22FCO Notes|r Cambiare nota personale",
         ["context_menu_remove_personal_guild_note"] = "|cDD2222FCO Notes|r Eliminare nota personale",
