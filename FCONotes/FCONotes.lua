@@ -1162,6 +1162,13 @@ local function buildTextureIdsList()
     return MARKER_TEXTURES_IDS
 end
 
+local function getTextureIdByPath(texturePath)
+    local markerTextures = FCON.textureVars.MARKER_TEXTURES
+    for k, v in ipairs(markerTextures) do
+        if v == texturePath then return k end
+    end
+    return
+end
 
 -- Build the menu
 local function BuildAddonMenu()
@@ -1334,7 +1341,8 @@ local function BuildAddonMenu()
             choices = textureVars.MARKER_TEXTURES,
             choicesTooltips = texturesIdsList,
             getFunc = function() return textureVars.MARKER_TEXTURES[settings.icon[FCONOTES_LIST_TYPE_GUILDS_ROSTER].texture] end,
-            setFunc = function(textureId)
+            setFunc = function(texturePath)
+                local textureId = getTextureIdByPath(texturePath)
                 if textureId ~= 0 then
                     settings.icon[FCONOTES_LIST_TYPE_GUILDS_ROSTER].texture = textureId
                     FCONotes_Settings_NoteGuildIconPreview.label:SetText(locVars["options_icon1_texture"] .. ": " .. textureId)
@@ -1431,7 +1439,8 @@ local function BuildAddonMenu()
             choices = textureVars.MARKER_TEXTURES,
             choicesTooltips = texturesIdsList,
             getFunc = function() return textureVars.MARKER_TEXTURES[settings.icon[FCONOTES_LIST_TYPE_FRIENDS_LIST].texture] end,
-            setFunc = function(textureId)
+            setFunc = function(texturePath)
+                local textureId = getTextureIdByPath(texturePath)
                 if textureId ~= 0 then
                     settings.icon[FCONOTES_LIST_TYPE_FRIENDS_LIST].texture = textureId
                     FCONotes_Settings_NoteFriendsIconPreview.label:SetText(locVars["options_icon2_texture"] .. ": " .. textureId)
@@ -1528,7 +1537,8 @@ local function BuildAddonMenu()
             choices = textureVars.MARKER_TEXTURES,
             choicesTooltips = texturesIdsList,
             getFunc = function() return textureVars.MARKER_TEXTURES[settings.icon[FCONOTES_LIST_TYPE_IGNORE_LIST].texture] end,
-            setFunc = function(textureId)
+            setFunc = function(texturePath)
+                local textureId = getTextureIdByPath(texturePath)
                 if textureId ~= 0 then
                     settings.icon[FCONOTES_LIST_TYPE_IGNORE_LIST].texture = textureId
                     FCONotes_Settings_NoteIgnoreIconPreview.label:SetText(locVars["options_icon3_texture"] .. ": " .. textureId)
