@@ -592,6 +592,7 @@ end
 
 --Global function to show personal note dialog
 function FCONotes_AddNote(ctrl, fromKeybind, delete, noteType)
+--d("[FCONotes_AddNote]")
     guildRosterVars.lastRowControl = nil
     friendsListVars.lastRowControl = nil
     ignoreListVars.lastRowControl = nil
@@ -952,18 +953,21 @@ end
 function FCONotes_CopyNameUnderControl()
     local mouseOverControl = WINDOW_MANAGER:GetMouseOverControl()
     local mocName = mouseOverControl:GetName()
+    if mocName == nil then return end
+--d("[FCONotes]mocName: " ..tos(mocName))
     local noteType
-    if (mocName:find("^ZO_GuildRosterList1Row%d+DisplayName*") or mocName:find("^ZO_GuildRosterList1Row%d%d+DisplayName*")) then
+    if (mocName:find("^ZO_GuildRosterList%dRow%d+DisplayName*") or mocName:find("^ZO_GuildRosterList%dRow%d%d+DisplayName*")) then
         noteType = FCONOTES_LIST_TYPE_GUILDS_ROSTER
     --ZO_KeyboardFriendsListList1Row1DisplayName
-    elseif (mocName:find("^ZO_KeyboardFriendsListList1Row%d+DisplayName*") or mocName:find("^ZO_KeyboardFriendsListList1Row%d%d+DisplayName*")) then
+    elseif (mocName:find("^ZO_KeyboardFriendsListList%dRow%d+DisplayName*") or mocName:find("^ZO_KeyboardFriendsListList%dRow%d%d+DisplayName*")) then
         noteType = FCONOTES_LIST_TYPE_FRIENDS_LIST
     --ZO_KeyboardIgnoreListList1Row1
-    elseif (mocName:find("^ZO_KeyboardIgnoreListList1Row%d+DisplayName*") or mocName:find("^ZO_KeyboardIgnoreListList1Row%d%d+DisplayName*")) then
+    elseif (mocName:find("^ZO_KeyboardIgnoreListList%dRow%d") or mocName:find("^ZO_KeyboardIgnoreListList%dRow%d%d")) then
         noteType = FCONOTES_LIST_TYPE_IGNORE_LIST
+        mouseOverControl = mouseOverControl:GetNamedChild("DisplayName")
     end
-
     if noteType == nil then return end
+
     FCONotes_AddNote(mouseOverControl, true, false, noteType)
 end
 
