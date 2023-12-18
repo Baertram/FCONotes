@@ -639,7 +639,7 @@ end
 local function FCONotes_SetFCONote(noteType, displayName, note, data)
 --d("[FCONotes_SetFCONote]noteType: " ..tos(noteType) .. ", displayName: " ..tos(displayName) .. ", note: " ..tos(note))
     if displayName == nil or displayName == "" then return false end
-    if note == nil then return false end
+    --if note == nil then return false end
     --The note was removed/cleared?
     local noteText = note
 
@@ -798,7 +798,11 @@ function FCONotes_AddNote(ctrl, fromKeybind, delete, noteType)
                     --Backup this note so you can restore it with next ReloadUI
                     FCONotes_BackupPersonalNotesNow(noteType, data.displayName)
                     --Delete the personal guild member note now
-                    settings.personalIgnoreListNotes[data.displayName] = nil
+                    --settings.personalIgnoreListNotes[data.displayName] = nil
+                    -->Try specil way to updae the ignore list note here as setupFunc does not seem to update properly?
+                    ignoreListVars.lastRowControl   = control
+                    FCONotes_SetFCONote(noteType, data.displayName, nil, nil)
+                    ignoreListVars.lastRowControl   = nil
                 end
             end
             --Delete the personal guild note now
